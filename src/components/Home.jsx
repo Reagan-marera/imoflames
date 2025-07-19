@@ -8,27 +8,22 @@ const Home = () => {
   const categories = ['Electronics']; 
 
   return (
-    <div style={{
-      maxWidth: '1200px',
-      margin: '0 auto',
-      padding: '2rem',
-      fontFamily: "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif",
-    }}>
-      <div style={{ marginBottom: '2rem' }}>
+    <div className="home-container">
+      <div className="search-bar-container">
         <SearchBar />
       </div>
 
-      <div style={{ marginBottom: '2rem', textAlign: 'center' }}>
+      <div className="category-filter-container">
         <h2>Filter by Category</h2>
-        <div style={{ display: 'flex', justifyContent: 'center', gap: '1rem', flexWrap: 'wrap' }}>
-          <button onClick={() => setSelectedCategory('')} style={{ padding: '0.5rem 1rem', border: 'none', borderRadius: '5px', background: '#2c3e50', color: '#fff' }}>
+        <div className="category-buttons">
+          <button onClick={() => setSelectedCategory('')} className="category-button">
             All
           </button>
           {categories.map(category => (
             <button
               key={category}
               onClick={() => setSelectedCategory(category)}
-              style={{ padding: '0.5rem 1rem', border: 'none', borderRadius: '5px', background: '#2c3e50', color: '#fff' }}
+              className="category-button"
             >
               {category}
             </button>
@@ -36,15 +31,7 @@ const Home = () => {
         </div>
       </div>
 
-      <h1 style={{
-        textAlign: 'center',
-        fontSize: '2.5rem',
-        fontWeight: 'bold',
-        color: '#2c3e50',
-        marginBottom: '2rem',
-        textTransform: 'uppercase',
-        letterSpacing: '2px',
-      }}>
+      <h1 className="featured-products-title">
         Featured Products
       </h1>
 
