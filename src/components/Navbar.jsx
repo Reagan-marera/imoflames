@@ -63,18 +63,11 @@ const Navbar = () => {
         </button>
       </nav>
 
-      {menuOpen && (
-        <ul className="mobile-menu">
-          <MobileNavLinks currentUser={currentUser} handleLogout={handleLogout} closeMenu={() => setMenuOpen(false)} />
-          <ThemeToggle darkMode={darkMode} toggle={toggleDarkMode} mobile />
-        </ul>
-      )}
+      <ul className={`mobile-menu ${menuOpen ? 'open' : ''}`}>
+        <MobileNavLinks currentUser={currentUser} handleLogout={handleLogout} closeMenu={() => setMenuOpen(false)} />
+        <ThemeToggle darkMode={darkMode} toggle={toggleDarkMode} mobile />
+      </ul>
 
-      <footer className="footer">
-        <ul className="footer-menu">
-          <DesktopNavLinks currentUser={currentUser} handleLogout={handleLogout} />
-        </ul>
-      </footer>
     </>
   );
 };
