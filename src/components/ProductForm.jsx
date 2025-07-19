@@ -15,7 +15,14 @@ const ProductForm = () => {
 
   const MAX_IMAGES = 10;
 
-  const categories = ['Electronics', 'Clothing', 'Books', 'Home & Garden']; // Example categories
+  const categories = [
+    'Electronics',
+    'Fashion',
+    'Home & Garden',
+    'Books',
+    'Sports & Outdoors',
+    'Toys & Games',
+  ];
 
   const handleImageChange = (e) => {
     const selectedFiles = Array.from(e.target.files);
@@ -108,96 +115,99 @@ const ProductForm = () => {
   };
 
   return (
-    <form onSubmit={handleSubmit} className="product-form">
-      <h2>Upload Product</h2>
-
-      <div className="form-group">
-        <label>Name</label>
-        <input
-          type="text"
-          placeholder="Product name"
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-          required
-        />
-      </div>
-
-      <div className="form-group">
-        <label>Description</label>
-        <textarea
-          placeholder="Detailed description of your product"
-          value={description}
-          onChange={(e) => setDescription(e.target.value)}
-          required
-        />
-      </div>
-
-      <div className="form-group">
-        <label>Price</label>
-        <input
-          type="number"
-          placeholder="0.00"
-          value={price}
-          onChange={(e) => setPrice(e.target.value)}
-          min="0"
-          step="0.01"
-          required
-        />
-      </div>
-
-      <div className="form-group">
-        <label>Category</label>
-        <select
-          value={category}
-          onChange={(e) => setCategory(e.target.value)}
-          required
-        >
-          <option value="">Select a category</option>
-          {categories.map((cat) => (
-            <option key={cat} value={cat}>
-              {cat}
-            </option>
-          ))}
-        </select>
-      </div>
-
-      <div className="form-group">
-        <label>Images (Up to {MAX_IMAGES})</label>
-        <div className="file-upload">
-          <label className="upload-btn">
-            Select Images
+    <div className="container">
+      <div className="card">
+        <h2 className="section-title">Upload a New Product</h2>
+        <form onSubmit={handleSubmit}>
+          <div className="form-group">
+            <label>Name</label>
             <input
-              type="file"
-              multiple
-              accept="image/*"
-              onChange={handleImageChange}
-              style={{ display: 'none' }}
+              type="text"
+              placeholder="Product name"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              required
             />
-          </label>
-          <span>{images.length} image(s) selected</span>
-        </div>
+          </div>
 
-        <div className="image-previews">
-          {previews.map((preview, index) => (
-            <div key={index} className="image-preview">
-              <img
-                src={preview}
-                alt={`Preview ${index}`}
-              />
-              <button
-                type="button"
-                className="remove-btn"
-                onClick={() => removeImage(index)}
-              >
-                ×
-              </button>
+          <div className="form-group">
+            <label>Description</label>
+            <textarea
+              placeholder="Detailed description of your product"
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              required
+            />
+          </div>
+
+          <div className="form-group">
+            <label>Price</label>
+            <input
+              type="number"
+              placeholder="0.00"
+              value={price}
+              onChange={(e) => setPrice(e.target.value)}
+              min="0"
+              step="0.01"
+              required
+            />
+          </div>
+
+          <div className="form-group">
+            <label>Category</label>
+            <select
+              value={category}
+              onChange={(e) => setCategory(e.target.value)}
+              required
+            >
+              <option value="">Select a category</option>
+              {categories.map((cat) => (
+                <option key={cat} value={cat}>
+                  {cat}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div className="form-group">
+            <label>Images (Up to {MAX_IMAGES})</label>
+            <div className="file-upload">
+              <label className="btn btn-secondary">
+                Select Images
+                <input
+                  type="file"
+                  multiple
+                  accept="image/*"
+                  onChange={handleImageChange}
+                  style={{ display: 'none' }}
+                />
+              </label>
+              <span>{images.length} image(s) selected</span>
             </div>
-          ))}
-        </div>
-      </div>
 
-      <button type="submit" className="submit-btn">Upload Product</button>
-    </form>
+            <div className="image-previews">
+              {previews.map((preview, index) => (
+                <div key={index} className="image-preview">
+                  <img
+                    src={preview}
+                    alt={`Preview ${index}`}
+                  />
+                  <button
+                    type="button"
+                    className="remove-btn"
+                    onClick={() => removeImage(index)}
+                  >
+                    ×
+                  </button>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <button type="submit" className="btn btn-primary">Upload Product</button>
+        </form>
+      </div>
+    </div>
   );
 };
 

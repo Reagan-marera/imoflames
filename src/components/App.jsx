@@ -13,6 +13,7 @@ import NotFound from './NotFound';
 import CartPage from './CartPage';
 import ContactUsForm from './Contact Us';
 import './App.css';
+import './global.css';
 import UserManagement from './UserManagement';
 
 function App() {

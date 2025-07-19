@@ -9,7 +9,6 @@ const CartPage = () => {
   const navigate = useNavigate();
   const token = localStorage.getItem('token');
 
-  // Load cart on mount
   useEffect(() => {
     const fetchCart = async () => {
       try {
@@ -23,8 +22,6 @@ const CartPage = () => {
         setCartItems(data);
         const total = data.reduce((sum, item) => sum + item.price, 0);
         setTotalPrice(total);
-
-        // Notify navbar or parent component of cart change
         window.dispatchEvent(new Event('cartUpdated'));
       } catch (err) {
         console.error(err);
@@ -46,8 +43,6 @@ const CartPage = () => {
       if (res.ok) {
         setCartItems(cartItems.filter(item => item.id !== productId));
         showToast("Removed from cart", "success");
-
-        // Notify cart update
         window.dispatchEvent(new Event('cartUpdated'));
       } else {
         const error = await res.json();
@@ -82,10 +77,7 @@ const CartPage = () => {
       if (res.ok) {
         showToast("Order placed successfully!", "success");
         setCartItems([]);
-
-        // Notify navbar that cart has been cleared
         window.dispatchEvent(new Event('cartUpdated'));
-
         navigate('/');
       } else {
         const error = await res.json();
@@ -99,75 +91,60 @@ const CartPage = () => {
 
   if (cartItems.length === 0) {
     return (
-      <div style={{ textAlign: 'center', marginTop: '3rem' }}>
+      <div className="container text-center mt-5">
         <h2>Your Cart is Empty</h2>
-        <Link to="/products">Browse Products</Link>
+        <Link to="/products" className="btn btn-primary mt-3">Browse Products</Link>
       </div>
     );
   }
 
   return (
-    <div className="cart-page">
-      <h2>Shopping Cart ({cartItems.length} items)</h2>
-
-      <div style={{
-        display: 'flex',
-        flexDirection: 'column',
-        gap: '1.5rem',
-        maxWidth: '800px',
-        margin: 'auto'
-      }}>
-        {cartItems.map(item => (
-          <div key={item.id} style={{
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-            padding: '1rem',
-            borderBottom: '1px solid #ccc'
-          }}>
-            <img
-              src={`${API_URL}/api/uploads/${item.image_path}`}
-              alt={item.name}
-              style={{ width: '80px', height: '80px', objectFit: 'cover', borderRadius: '8px' }}
-            />
-            <div style={{ flex: 1, marginLeft: '1rem' }}>
-              <h3>{item.name}</h3>
-              <p>KES {item.price.toFixed(2)}</p>
+    <div className="container cart-page">
+      <h2 className="section-title">Shopping Cart ({cartItems.length} items)</h2>
+      <div className="cart-container">
+        <div className="cart-items">
+          {cartItems.map(item => (
+            <div key={item.id} className="cart-item card">
+              <img
+                src={`${API_URL}/api/uploads/${item.image_path}`}
+                alt={item.name}
+                className="cart-item-image"
+              />
+              <div className="cart-item-details">
+                <h3>{item.name}</h3>
+                <p>KES {item.price.toFixed(2)}</p>
+              </div>
+              <button
+                onClick={() => handleRemove(item.id)}
+                className="btn btn-danger"
+              >
+                Remove
+              </button>
             </div>
-            <button
-              onClick={() => handleRemove(item.id)}
-              style={{
-                background: '#e74c3c',
-                color: 'white',
-                border: 'none',
-                padding: '6px 12px',
-                cursor: 'pointer',
-                borderRadius: '5px'
-              }}
-            >
-              Remove
-            </button>
-          </div>
-        ))}
-
-        <div style={{ marginTop: '2rem', fontWeight: 'bold' }}>
-          Total: KES {totalPrice.toFixed(2)}
+          ))}
         </div>
-
-        <button
-          onClick={handleCheckout}
-          style={{
-            background: '#2ecc71',
-            color: 'white',
-            border: 'none',
-            padding: '12px',
-            borderRadius: '5px',
-            marginTop: '1rem',
-            fontSize: '1.1rem'
-          }}
-        >
-          Proceed to Checkout
-        </button>
+        <div className="cart-summary card">
+          <h3>Cart Summary</h3>
+          <div className="summary-row">
+            <span>Subtotal</span>
+            <span>KES {totalPrice.toFixed(2)}</span>
+          </div>
+          <div className="summary-row">
+            <span>Shipping</span>
+            <span>FREE</span>
+          </div>
+          <hr />
+          <div className="summary-row total">
+            <span>Total</span>
+            <span>KES {totalPrice.toFixed(2)}</span>
+          </div>
+          <button
+            onClick={handleCheckout}
+            className="btn btn-primary btn-block mt-3"
+          >
+            Proceed to Checkout
+          </button>
+        </div>
       </div>
     </div>
   );
