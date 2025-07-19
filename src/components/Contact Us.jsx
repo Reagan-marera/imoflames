@@ -73,97 +73,100 @@ const ContactUsForm = () => {
   };
 
   return (
-    <form onSubmit={handleSubmit} className="contact-form">
-      <h2>Contact Us</h2>
+    <div className="container">
+      <div className="card">
+        <h2 className="section-title">Contact Us</h2>
+        <form onSubmit={handleSubmit}>
+          <div className="form-group">
+            <label>Product Name</label>
+            <input
+              type="text"
+              name="name"
+              placeholder="Product name"
+              value={productInfo.name}
+              onChange={handleProductInfoChange}
+            />
+          </div>
 
-      <div className="form-group">
-        <label>Product Name</label>
-        <input
-          type="text"
-          name="name"
-          placeholder="Product name"
-          value={productInfo.name}
-          onChange={handleProductInfoChange}
-        />
+          <div className="form-group">
+            <label>Product Description</label>
+            <textarea
+              name="description"
+              placeholder="Product description"
+              value={productInfo.description}
+              onChange={handleProductInfoChange}
+            />
+          </div>
+
+          <div className="form-group">
+            <label>Product Price</label>
+            <input
+              type="number"
+              name="price"
+              placeholder="Product price"
+              value={productInfo.price}
+              onChange={handleProductInfoChange}
+            />
+          </div>
+
+          <div className="form-group">
+            <label>Supplier Name</label>
+            <input
+              type="text"
+              name="name"
+              placeholder="Supplier name"
+              value={supplierInfo.name}
+              onChange={handleSupplierInfoChange}
+            />
+          </div>
+
+          <div className="form-group">
+            <label>Supplier Contact</label>
+            <input
+              type="text"
+              name="contact"
+              placeholder="Supplier contact"
+              value={supplierInfo.contact}
+              onChange={handleSupplierInfoChange}
+            />
+          </div>
+
+          <div className="form-group">
+            <label>Phone Number</label>
+            <input
+              type="text"
+              placeholder="Your phone number"
+              value={phoneNumber}
+              onChange={(e) => setPhoneNumber(e.target.value)}
+              required
+            />
+          </div>
+
+          <div className="form-group">
+            <label>Email</label>
+            <input
+              type="email"
+              placeholder="Your email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              required
+            />
+          </div>
+
+          <div className="form-group">
+            <label>Message</label>
+            <textarea
+              placeholder="Your message"
+              value={message}
+              onChange={(e) => setMessage(e.target.value)}
+              required
+            />
+          </div>
+
+          <button type="submit" className="btn btn-primary">Submit</button>
+        </form>
       </div>
-
-      <div className="form-group">
-        <label>Product Description</label>
-        <textarea
-          name="description"
-          placeholder="Product description"
-          value={productInfo.description}
-          onChange={handleProductInfoChange}
-        />
-      </div>
-
-      <div className="form-group">
-        <label>Product Price</label>
-        <input
-          type="number"
-          name="price"
-          placeholder="Product price"
-          value={productInfo.price}
-          onChange={handleProductInfoChange}
-        />
-      </div>
-
-      <div className="form-group">
-        <label>Supplier Name</label>
-        <input
-          type="text"
-          name="name"
-          placeholder="Supplier name"
-          value={supplierInfo.name}
-          onChange={handleSupplierInfoChange}
-        />
-      </div>
-
-      <div className="form-group">
-        <label>Supplier Contact</label>
-        <input
-          type="text"
-          name="contact"
-          placeholder="Supplier contact"
-          value={supplierInfo.contact}
-          onChange={handleSupplierInfoChange}
-        />
-      </div>
-
-      <div className="form-group">
-        <label>Phone Number</label>
-        <input
-          type="text"
-          placeholder="Your phone number"
-          value={phoneNumber}
-          onChange={(e) => setPhoneNumber(e.target.value)}
-          required
-        />
-      </div>
-
-      <div className="form-group">
-        <label>Email</label>
-        <input
-          type="email"
-          placeholder="Your email"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          required
-        />
-      </div>
-
-      <div className="form-group">
-        <label>Message</label>
-        <textarea
-          placeholder="Your message"
-          value={message}
-          onChange={(e) => setMessage(e.target.value)}
-          required
-        />
-      </div>
-
-      <button type="submit" className="submit-btn">Submit</button>
-    </form>
+    </div>
   );
 };
 

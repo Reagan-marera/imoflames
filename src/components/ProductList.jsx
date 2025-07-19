@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { API_URL } from '../config';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { showToast } from './utils';
+import ProductCard from './ProductCard';
 
 const ProductList = ({ selectedCategory }) => {
   const [products, setProducts] = useState([]);
@@ -12,7 +13,6 @@ const ProductList = ({ selectedCategory }) => {
   const token = localStorage.getItem('token');
   const navigate = useNavigate();
 
-  // Load user info
   const [currentUser, setCurrentUser] = useState(null);
   useEffect(() => {
     const fetchCurrentUser = async () => {
@@ -37,7 +37,6 @@ const ProductList = ({ selectedCategory }) => {
     fetchCurrentUser();
   }, [token]);
 
-  // Fetch products
   useEffect(() => {
     const fetchProducts = async () => {
       let url = `${API_URL}/api/products`;
@@ -206,7 +205,7 @@ const ProductList = ({ selectedCategory }) => {
 
   if (products.length === 0) {
     return (
-      <div style={{ textAlign: 'center', margin: '4rem 0' }}>
+      <div className="empty-products-container">
         <img src="/images/icons/empty-box.png" alt="No products" width="100" />
         <h3>No products available yet.</h3>
         <p>Check back later or upload one yourself!</p>
@@ -215,453 +214,109 @@ const ProductList = ({ selectedCategory }) => {
   }
 
   return (
-    <div style={{
-      display: 'flex',
-      flexWrap: 'wrap',
-      justifyContent: 'center',
-      gap: '2rem',
-      padding: '2rem 1rem',
-      position: 'relative'
-    }}>
+    <div className="product-list-container">
       {products.map(product => (
-        <div 
-          key={product.id} 
-          onClick={() => openProductDetails(product)}
-          style={{
-            border: '1px solid #ccc',
-            borderRadius: '10px',
-            padding: '1rem',
-            width: '280px',
-            boxShadow: '0 4px 8px rgba(0,0,0,0.05)',
-            textAlign: 'center',
-            backgroundColor: '#fff',
-            transition: 'transform 0.2s',
-            cursor: 'pointer',
-            ':hover': { transform: 'scale(1.02)' }
-          }}
-        >
-          <div style={{
-            position: 'relative',
-            width: '100%',
-            height: '180px',
-            overflow: 'hidden',
-            borderRadius: '8px',
-            marginBottom: '10px'
-          }}>
-            <img
-              src={`${API_URL}/api/uploads/${product.image_path}`}
-              alt={product.name}
-              style={{
-                width: '100%',
-                height: '100%',
-                objectFit: 'cover'
-              }}
-            />
-          </div>
-
-          <h3 style={{ color: '#2c3e50', marginBottom: '0.5rem' }}>{product.name}</h3>
-          <p style={{ 
-            fontStyle: 'italic', 
-            color: '#555', 
-            minHeight: '60px',
-            fontWeight: 'bold',
-            marginBottom: '0.5rem'
-          }}>
-            {product.description.length > 60 
-              ? `${product.description.substring(0, 60)}...` 
-              : product.description}
-          </p>
-          <p style={{ 
-            fontWeight: 'bold', 
-            fontSize: '1.1rem',
-            color: '#e67e22',
-            marginBottom: '1rem'
-          }}>
-            KES {product.price.toLocaleString()}
-          </p>
-
-          {(currentUser && (currentUser.is_admin || product.user_id === currentUser.id)) && (
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                handleDelete(product.id);
-              }}
-              style={{
-                background: '#e74c3c',
-                color: 'white',
-                border: 'none',
-                padding: '8px 12px',
-                borderRadius: '5px',
-                marginBottom: '10px',
-                cursor: 'pointer',
-                marginRight: '10px'
-              }}
-            >
-              Delete
-            </button>
-          )}
-
-          {currentUser && product.user_id === currentUser.id && !product.is_approved && (
-            <p style={{ color: 'orange', fontWeight: 'bold', marginBottom: '10px' }}>
-              ⚠️ Pending Approval
-            </p>
-          )}
-
-          <button
-            onClick={(e) => {
-              e.stopPropagation();
-              handleBuy(product);
-            }}
-            style={{
-              background: '#3498db',
-              color: 'white',
-              border: 'none',
-              padding: '10px 16px',
-              borderRadius: '5px',
-              cursor: 'pointer',
-              marginRight: '10px',
-              fontWeight: 'bold',
-              marginBottom: '10px'
-            }}
-          >
-            Order Now
-          </button>
-
-          <button
-            onClick={(e) => {
-              e.stopPropagation();
-              handleAddToCart(product);
-            }}
-            style={{
-              background: '#2c3e50',
-              color: 'white',
-              border: 'none',
-              padding: '10px 16px',
-              borderRadius: '5px',
-              cursor: 'pointer',
-              fontWeight: 'bold'
-            }}
-          >
-            ➕ Add to Cart
-          </button>
-        </div>
+        <ProductCard
+          key={product.id}
+          product={product}
+          onSelect={openProductDetails}
+          onBuy={handleBuy}
+          onAddToCart={handleAddToCart}
+          onDelete={handleDelete}
+          currentUser={currentUser}
+        />
       ))}
 
-      {/* Product Details Modal */}
       {showDetailsModal && selectedProduct && (
-        <div style={{
-          position: 'fixed',
-          top: 0,
-          left: 0,
-          right: 0,
-          bottom: 0,
-          backgroundColor: 'rgba(0,0,0,0.8)',
-          zIndex: 1000,
-          display: 'flex',
-          justifyContent: 'center',
-          alignItems: 'center',
-          padding: '20px',
-          overflowY: 'auto'
-        }}>
-          <div style={{
-            backgroundColor: 'white',
-            borderRadius: '10px',
-            width: '100%',
-            maxWidth: '900px',
-            padding: '20px',
-            position: 'relative'
-          }}>
-            <button
-              onClick={closeProductDetails}
-              style={{
-                position: 'absolute',
-                top: '15px',
-                right: '15px',
-                background: 'none',
-                border: 'none',
-                fontSize: '24px',
-                cursor: 'pointer',
-                color: '#7f8c8d'
-              }}
-            >
+        <div className="modal-overlay">
+          <div className="modal-content">
+            <button onClick={closeProductDetails} className="modal-close-btn">
               ×
             </button>
-
-            <div style={{
-              display: 'flex',
-              flexDirection: 'column',
-              gap: '20px'
-            }}>
-              <div style={{
-                display: 'flex',
-                flexDirection: ['column', 'row'],
-                gap: '20px'
-              }}>
-                <div style={{ flex: 1 }}>
-                  <div style={{
-                    position: 'relative',
-                    width: '100%',
-                    height: '400px',
-                    overflow: 'hidden',
-                    borderRadius: '8px',
-                    marginBottom: '10px'
-                  }}>
-                    <img
-                      src={getCurrentImage()}
-                      alt={selectedProduct.name}
-                      style={{
-                        width: '100%',
-                        height: '100%',
-                        objectFit: 'contain'
-                      }}
-                    />
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        prevImage();
-                      }}
-                      style={{
-                        position: 'absolute',
-                        left: '10px',
-                        top: '50%',
-                        transform: 'translateY(-50%)',
-                        background: 'rgba(0,0,0,0.5)',
-                        color: '#fff',
-                        border: 'none',
-                        padding: '15px',
-                        cursor: 'pointer',
-                        zIndex: 1,
-                        borderRadius: '50%'
-                      }}
-                    >
-                      ❮
-                    </button>
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        nextImage();
-                      }}
-                      style={{
-                        position: 'absolute',
-                        right: '10px',
-                        top: '50%',
-                        transform: 'translateY(-50%)',
-                        background: 'rgba(0,0,0,0.5)',
-                        color: '#fff',
-                        border: 'none',
-                        padding: '15px',
-                        cursor: 'pointer',
-                        zIndex: 1,
-                        borderRadius: '50%'
-                      }}
-                    >
-                      ❯
-                    </button>
-                  </div>
-                  <div style={{
-                    display: 'flex',
-                    gap: '10px',
-                    overflowX: 'auto',
-                    padding: '10px 0'
-                  }}>
-                    <div 
-                      onClick={() => setCurrentImageIndex(0)}
-                      style={{
-                        minWidth: '80px',
-                        height: '80px',
-                        border: currentImageIndex === 0 ? '2px solid #3498db' : '1px solid #ddd',
-                        borderRadius: '5px',
-                        overflow: 'hidden',
-                        cursor: 'pointer'
-                      }}
-                    >
-                      <img
-                        src={`${API_URL}/api/uploads/${selectedProduct.image_path}`}
-                        alt="Thumbnail"
-                        style={{
-                          width: '100%',
-                          height: '100%',
-                          objectFit: 'cover'
-                        }}
-                      />
-                    </div>
-                    {selectedProduct.extra_images && selectedProduct.extra_images.map((img, index) => (
-                      <div 
-                        key={index}
-                        onClick={() => setCurrentImageIndex(index + 1)}
-                        style={{
-                          minWidth: '80px',
-                          height: '80px',
-                          border: currentImageIndex === index + 1 ? '2px solid #3498db' : '1px solid #ddd',
-                          borderRadius: '5px',
-                          overflow: 'hidden',
-                          cursor: 'pointer'
-                        }}
-                      >
-                        <img
-                          src={`${API_URL}/api/uploads/${img}`}
-                          alt={`Thumbnail ${index + 1}`}
-                          style={{
-                            width: '100%',
-                            height: '100%',
-                            objectFit: 'cover'
-                          }}
-                        />
-                      </div>
-                    ))}
-                  </div>
-                </div>
-
-                <div style={{ flex: 1 }}>
-                  <h2 style={{
-                    color: '#2c3e50',
-                    marginBottom: '10px',
-                    fontSize: '28px'
-                  }}>
-                    {selectedProduct.name}
-                  </h2>
-
-                  <p style={{
-                    fontSize: '24px',
-                    fontWeight: 'bold',
-                    color: '#e67e22',
-                    marginBottom: '20px'
-                  }}>
-                    KES {selectedProduct.price.toLocaleString()}
-                  </p>
-
-                  <div style={{
-                    backgroundColor: '#f8f9fa',
-                    padding: '15px',
-                    borderRadius: '8px',
-                    marginBottom: '20px'
-                  }}>
-                    <h3 style={{
-                      marginBottom: '10px',
-                      color: '#2c3e50',
-                      fontSize: '18px'
-                    }}>
-                      Description
-                    </h3>
-                    <p style={{ lineHeight: '1.6' }}>
-                      {selectedProduct.description}
-                    </p>
-                  </div>
-
-                  <div style={{
-                    display: 'flex',
-                    flexWrap: 'wrap',
-                    gap: '10px',
-                    marginBottom: '20px'
-                  }}>
-                    <div style={{
-                      backgroundColor: '#f8f9fa',
-                      padding: '10px 15px',
-                      borderRadius: '5px',
-                      flex: '1 1 200px'
-                    }}>
-                      <p style={{ 
-                        fontSize: '14px',
-                        color: '#7f8c8d',
-                        marginBottom: '5px'
-                      }}>
-                        Category
-                      </p>
-                      <p style={{ fontWeight: 'bold' }}>
-                        {selectedProduct.category || 'N/A'}
-                      </p>
-                    </div>
-                    <div style={{
-                      backgroundColor: '#f8f9fa',
-                      padding: '10px 15px',
-                      borderRadius: '5px',
-                      flex: '1 1 200px'
-                    }}>
-                      <p style={{ 
-                        fontSize: '14px',
-                        color: '#7f8c8d',
-                        marginBottom: '5px'
-                      }}>
-                        Condition
-                      </p>
-                      <p style={{ fontWeight: 'bold' }}>
-                        {selectedProduct.condition || 'N/A'}
-                      </p>
-                    </div>
-                  </div>
-
-                  <div style={{
-                    display: 'flex',
-                    gap: '15px',
-                    marginTop: '20px'
-                  }}>
-                    <button
-                      onClick={() => handleBuy(selectedProduct)}
-                      style={{
-                        background: '#3498db',
-                        color: 'white',
-                        border: 'none',
-                        padding: '12px 20px',
-                        borderRadius: '5px',
-                        cursor: 'pointer',
-                        fontWeight: 'bold',
-                        flex: 1
-                      }}
-                    >
-                      Order Now
-                    </button>
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleAddToCart(selectedProduct);
-                      }}
-                      style={{
-                        background: '#2c3e50',
-                        color: 'white',
-                        border: 'none',
-                        padding: '12px 20px',
-                        borderRadius: '5px',
-                        cursor: 'pointer',
-                        fontWeight: 'bold',
-                        flex: 1
-                      }}
-                    >
-                      ➕ Add to Cart
-                    </button>
-                  </div>
-                </div>
-              </div>
-
-              {currentUser && (currentUser.is_admin || selectedProduct.user_id === currentUser.id) && (
-                <div style={{
-                  backgroundColor: '#f8f9fa',
-                  padding: '15px',
-                  borderRadius: '8px',
-                  marginTop: '20px'
-                }}>
-                  <h3 style={{
-                    marginBottom: '10px',
-                    color: '#2c3e50',
-                    fontSize: '18px'
-                  }}>
-                    Admin Actions
-                  </h3>
-                  <button
-                    onClick={() => handleDelete(selectedProduct.id)}
-                    style={{
-                      background: '#e74c3c',
-                      color: 'white',
-                      border: 'none',
-                      padding: '10px 15px',
-                      borderRadius: '5px',
-                      cursor: 'pointer',
-                      marginRight: '10px'
-                    }}
-                  >
-                    Delete Product
+            <div className="modal-body">
+              <div className="modal-image-gallery">
+                <div className="modal-main-image-container">
+                  <img
+                    src={getCurrentImage()}
+                    alt={selectedProduct.name}
+                    className="modal-main-image"
+                  />
+                  <button onClick={prevImage} className="modal-nav-btn prev">
+                    ❮
+                  </button>
+                  <button onClick={nextImage} className="modal-nav-btn next">
+                    ❯
                   </button>
                 </div>
-              )}
+                <div className="modal-thumbnail-container">
+                  <div
+                    onClick={() => setCurrentImageIndex(0)}
+                    className={`modal-thumbnail ${currentImageIndex === 0 ? 'active' : ''}`}
+                  >
+                    <img
+                      src={`${API_URL}/api/uploads/${selectedProduct.image_path}`}
+                      alt="Thumbnail"
+                    />
+                  </div>
+                  {selectedProduct.extra_images && selectedProduct.extra_images.map((img, index) => (
+                    <div
+                      key={index}
+                      onClick={() => setCurrentImageIndex(index + 1)}
+                      className={`modal-thumbnail ${currentImageIndex === index + 1 ? 'active' : ''}`}
+                    >
+                      <img
+                        src={`${API_URL}/api/uploads/${img}`}
+                        alt={`Thumbnail ${index + 1}`}
+                      />
+                    </div>
+                  ))}
+                </div>
+              </div>
+              <div className="modal-product-details">
+                <h2>{selectedProduct.name}</h2>
+                <p className="modal-price">
+                  KES {selectedProduct.price.toLocaleString()}
+                </p>
+                <div className="modal-description">
+                  <h3>Description</h3>
+                  <p>{selectedProduct.description}</p>
+                </div>
+                <div className="modal-meta">
+                  <div>
+                    <p className="meta-label">Category</p>
+                    <p className="meta-value">{selectedProduct.category || 'N/A'}</p>
+                  </div>
+                  <div>
+                    <p className="meta-label">Condition</p>
+                    <p className="meta-value">{selectedProduct.condition || 'N/A'}</p>
+                  </div>
+                </div>
+                <div className="modal-actions">
+                  <button
+                    onClick={() => handleBuy(selectedProduct)}
+                    className="btn btn-primary"
+                  >
+                    Order Now
+                  </button>
+                  <button
+                    onClick={() => handleAddToCart(selectedProduct)}
+                    className="btn btn-secondary"
+                  >
+                    Add to Cart
+                  </button>
+                </div>
+                {currentUser && (currentUser.is_admin || selectedProduct.user_id === currentUser.id) && (
+                  <div className="modal-admin-actions">
+                    <h3>Admin Actions</h3>
+                    <button
+                      onClick={() => handleDelete(selectedProduct.id)}
+                      className="btn btn-danger"
+                    >
+                      Delete Product
+                    </button>
+                  </div>
+                )}
+              </div>
             </div>
           </div>
         </div>
