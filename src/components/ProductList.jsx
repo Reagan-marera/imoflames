@@ -203,6 +203,16 @@ const ProductList = ({ selectedCategory }) => {
     return `${API_URL}/api/uploads/${selectedProduct.extra_images[currentImageIndex - 1]}`;
   };
 
+  const [filterCategory, setFilterCategory] = useState('All');
+  const categories = ['All', 'Phones', 'TVs', 'Laptops', 'Heaters', 'Gaming Consoles', 'Accessories'];
+
+  const filteredProducts = products.filter(product => {
+    if (filterCategory === 'All') {
+      return true;
+    }
+    return product.category === filterCategory;
+  });
+
   if (products.length === 0) {
     return (
       <div className="empty-products-container">
@@ -214,18 +224,34 @@ const ProductList = ({ selectedCategory }) => {
   }
 
   return (
-    <div className="product-list-container">
-      {products.map(product => (
-        <ProductCard
-          key={product.id}
-          product={product}
-          onSelect={openProductDetails}
-          onBuy={handleBuy}
-          onAddToCart={handleAddToCart}
-          onDelete={handleDelete}
-          currentUser={currentUser}
-        />
-      ))}
+    <div>
+      <div className="filter-container" style={{ marginBottom: '2rem' }}>
+        <label htmlFor="category-select">Filter by Category:</label>
+        <select
+          id="category-select"
+          value={filterCategory}
+          onChange={(e) => setFilterCategory(e.target.value)}
+        >
+          {categories.map((category) => (
+            <option key={category} value={category}>
+              {category}
+            </option>
+          ))}
+        </select>
+      </div>
+      <div className="product-list-container">
+        {filteredProducts.map(product => (
+          <ProductCard
+            key={product.id}
+            product={product}
+            onSelect={openProductDetails}
+            onBuy={handleBuy}
+            onAddToCart={handleAddToCart}
+            onDelete={handleDelete}
+            currentUser={currentUser}
+          />
+        ))}
+      </div>
 
       {showDetailsModal && selectedProduct && (
         <div style={{

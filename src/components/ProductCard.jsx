@@ -12,6 +12,11 @@ const ProductCard = ({ product, onSelect, onBuy, onAddToCart, onDelete, currentU
         </div>
         <div className="product-card-content">
             <h3 className="product-card-title">{product.name}</h3>
+            <p className="product-card-description">
+                {product.description.length > 100
+                    ? `${product.description.substring(0, 100)}...`
+                    : product.description}
+            </p>
             <p className="product-card-price">
                 KES {product.price.toLocaleString()}
             </p>
