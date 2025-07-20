@@ -14,7 +14,7 @@ import ContactUsForm from './Contact Us';
 import './App.css';
 import './global.css';
 import UserManagement from './UserManagement';
-import ProductCarousel from './ProductCarousel';
+import ProductList from './ProductList';
 
 function App() {
   return (
@@ -27,7 +27,7 @@ function App() {
             <Route path="/contact-us" element={<ContactUsForm />} />
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
-            <Route path="/products" element={<div className="container"><ProductCarousel category="All" /></div>} />
+            <Route path="/products" element={<ProductList />} />
             <Route path="/upload" element={<ProductForm />} />
             <Route path="/payment" element={<PaymentForm />} />
             <Route path="/admin" element={<AdminDashboard />} />

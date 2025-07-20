@@ -6,20 +6,20 @@ import ProductCarousel from './ProductCarousel';
 
 const Home = () => {
   const categories = [
-    'Electronics',
-    'Fashion',
-    'Home & Garden',
-    'Books',
-    'Sports & Outdoors',
-    'Toys & Games',
+    { name: 'Phones', icon: '📱' },
+    { name: 'TVs', icon: '📺' },
+    { name: 'Laptops', icon: '💻' },
+    { name: 'Heaters', icon: '🔥' },
+    { name: 'Gaming Consoles', icon: '🎮' },
+    { name: 'Accessories', icon: '🎧' },
   ];
 
   return (
     <div className="home-container">
       <section className="hero-section">
         <div className="hero-content">
-          <h1 className="hero-title">Unlimited products, discounts, and more.</h1>
-          <p className="hero-subtitle">Shop anywhere. Cancel anytime.</p>
+          <h1 className="hero-title">Discover Your Next Favorite Thing</h1>
+          <p className="hero-subtitle">Shop our curated collection of high-quality products</p>
           <button className="btn btn-primary">Shop Now</button>
         </div>
       </section>
@@ -30,7 +30,7 @@ const Home = () => {
 
       <div className="product-carousels">
         {categories.map(category => (
-          <ProductCarousel key={category} category={category} />
+          <ProductCarousel key={category.name} category={category.name} />
         ))}
       </div>
     </div>

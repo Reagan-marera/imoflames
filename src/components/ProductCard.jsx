@@ -1,7 +1,7 @@
 import React from 'react';
 import { API_URL } from '../config';
 
-const ProductCard = ({ product, onSelect }) => (
+const ProductCard = ({ product, onSelect, onBuy, onAddToCart, onDelete, currentUser }) => (
     <div className="product-card" onClick={() => onSelect(product)}>
         <div className="product-card-image-container">
             <img
