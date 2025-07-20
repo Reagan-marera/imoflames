@@ -16,12 +16,12 @@ const ProductForm = () => {
   const MAX_IMAGES = 10;
 
   const categories = [
-    'Electronics',
-    'Fashion',
-    'Home & Garden',
-    'Books',
-    'Sports & Outdoors',
-    'Toys & Games',
+    'Phones',
+    'TVs',
+    'Laptops',
+    'Heaters',
+    'Gaming Consoles',
+    'Accessories',
   ];
 
   const handleImageChange = (e) => {
