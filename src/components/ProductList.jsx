@@ -228,8 +228,8 @@ const ProductList = ({ selectedCategory }) => {
       ))}
 
       {showDetailsModal && selectedProduct && (
-        <div className="modal-overlay">
-          <div className="modal-content">
+        <div className="modal-overlay" onClick={closeProductDetails}>
+          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
             <button onClick={closeProductDetails} className="modal-close-btn">
               ×
             </button>

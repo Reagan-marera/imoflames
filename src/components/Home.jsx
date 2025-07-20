@@ -1,37 +1,54 @@
 import React, { useState } from 'react';
-import ProductList from './ProductList';
+import ProductCarousel from './ProductCarousel';
 import SearchBar from './SearchBar';
 
-import ProductCarousel from './ProductCarousel';
-
 const Home = () => {
+  const [selectedCategory, setSelectedCategory] = useState('All');
   const categories = [
-    { name: 'Phones', icon: '📱' },
-    { name: 'TVs', icon: '📺' },
-    { name: 'Laptops', icon: '💻' },
-    { name: 'Heaters', icon: '🔥' },
-    { name: 'Gaming Consoles', icon: '🎮' },
-    { name: 'Accessories', icon: '🎧' },
+    'All',
+    'Phones',
+    'TVs',
+    'Laptops',
+    'Heaters',
+    'Gaming Consoles',
+    'Accessories',
   ];
 
   return (
     <div className="home-container">
       <section className="hero-section">
         <div className="hero-content">
-          <h1 className="hero-title">Discover Your Next Favorite Thing</h1>
-          <p className="hero-subtitle">Shop our curated collection of high-quality products</p>
-          <button className="btn btn-primary">Shop Now</button>
+          <h1 className="hero-title">Your One-Stop Shop for Electronics</h1>
+          <p className="hero-subtitle">Find the best deals on the latest gadgets</p>
         </div>
       </section>
 
-      <div className="search-bar-container">
+      <div className="search-and-filter-container">
         <SearchBar />
+        <div className="filter-container">
+          <label htmlFor="category-select">Filter by Category:</label>
+          <select
+            id="category-select"
+            value={selectedCategory}
+            onChange={(e) => setSelectedCategory(e.target.value)}
+          >
+            {categories.map((category) => (
+              <option key={category} value={category}>
+                {category}
+              </option>
+            ))}
+          </select>
+        </div>
       </div>
 
       <div className="product-carousels">
-        {categories.map(category => (
-          <ProductCarousel key={category.name} category={category.name} />
-        ))}
+        {selectedCategory === 'All'
+          ? categories
+              .filter((c) => c !== 'All')
+              .map((category) => (
+                <ProductCarousel key={category} category={category} />
+              ))
+          : <ProductCarousel category={selectedCategory} />}
       </div>
     </div>
   );

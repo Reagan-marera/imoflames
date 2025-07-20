@@ -2,11 +2,34 @@
 
 :root {
   --primary-color: #e50914;
+  --secondary-color: #f5f5f1;
   --background-dark: #141414;
   --text-light: #fff;
+  --text-dark: #8c8c8c;
   --card-bg-dark: #222;
   --shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
   --border-radius: 5px;
+}
+
+.search-and-filter-container {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 2rem 0;
+}
+
+.filter-container {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+#category-select {
+  background-color: var(--card-bg-dark);
+  color: var(--text-light);
+  border: 1px solid #333;
+  border-radius: var(--border-radius);
+  padding: 0.5rem;
 }
 
 body {
