@@ -43,12 +43,11 @@ const Login = () => {
   };
 
   return (
-    <div className="container">
-      <div className="card auth-card">
-        <h2 className="section-title">Login</h2>
+    <div className="auth-container">
+      <div className="auth-card">
+        <h1 className="auth-title">Sign In</h1>
         <form onSubmit={handleSubmit}>
           <div className="form-group">
-            <label>Username</label>
             <input
               type="text"
               placeholder="Username"
@@ -58,7 +57,6 @@ const Login = () => {
             />
           </div>
           <div className="form-group">
-            <label>Password</label>
             <input
               type="password"
               placeholder="Password"
@@ -68,7 +66,7 @@ const Login = () => {
               autoComplete="current-password"
             />
           </div>
-          <button type="submit" className="btn btn-primary btn-block">Login</button>
+          <button type="submit" className="btn btn-primary btn-block">Sign In</button>
         </form>
       </div>
     </div>
