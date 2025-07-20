@@ -31,20 +31,17 @@ const Register = () => {
   };
 
   return (
-    <div className="container">
-      <div className="card auth-card">
-        <h2 className="section-title">Register</h2>
+    <div className="auth-container">
+      <div className="auth-card">
+        <h1 className="auth-title">Register</h1>
         <form onSubmit={handleSubmit}>
           <div className="form-group">
-            <label>Username</label>
             <input type="text" placeholder="Username" value={username} onChange={(e) => setUsername(e.target.value)} required />
           </div>
           <div className="form-group">
-            <label>Email</label>
             <input type="email" placeholder="Email" value={email} onChange={(e) => setEmail(e.target.value)} required />
           </div>
           <div className="form-group">
-            <label>Password</label>
             <input type="password" placeholder="Password" value={password} onChange={(e) => setPassword(e.target.value)} required />
           </div>
           <button type="submit" className="btn btn-primary btn-block">Register</button>

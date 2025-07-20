@@ -74,11 +74,10 @@ const ContactUsForm = () => {
 
   return (
     <div className="container">
-      <div className="card">
-        <h2 className="section-title">Contact Us</h2>
+      <div className="card" style={{ maxWidth: '800px', margin: '2rem auto' }}>
+        <h1 className="auth-title">Contact Us</h1>
         <form onSubmit={handleSubmit}>
           <div className="form-group">
-            <label>Product Name</label>
             <input
               type="text"
               name="name"
@@ -89,7 +88,6 @@ const ContactUsForm = () => {
           </div>
 
           <div className="form-group">
-            <label>Product Description</label>
             <textarea
               name="description"
               placeholder="Product description"
@@ -99,7 +97,6 @@ const ContactUsForm = () => {
           </div>
 
           <div className="form-group">
-            <label>Product Price</label>
             <input
               type="number"
               name="price"
@@ -110,7 +107,6 @@ const ContactUsForm = () => {
           </div>
 
           <div className="form-group">
-            <label>Supplier Name</label>
             <input
               type="text"
               name="name"
@@ -121,7 +117,6 @@ const ContactUsForm = () => {
           </div>
 
           <div className="form-group">
-            <label>Supplier Contact</label>
             <input
               type="text"
               name="contact"
@@ -132,7 +127,6 @@ const ContactUsForm = () => {
           </div>
 
           <div className="form-group">
-            <label>Phone Number</label>
             <input
               type="text"
               placeholder="Your phone number"
@@ -143,7 +137,6 @@ const ContactUsForm = () => {
           </div>
 
           <div className="form-group">
-            <label>Email</label>
             <input
               type="email"
               placeholder="Your email"
@@ -154,7 +147,6 @@ const ContactUsForm = () => {
           </div>
 
           <div className="form-group">
-            <label>Message</label>
             <textarea
               placeholder="Your message"
               value={message}
@@ -163,7 +155,7 @@ const ContactUsForm = () => {
             />
           </div>
 
-          <button type="submit" className="btn btn-primary">Submit</button>
+          <button type="submit" className="btn btn-primary btn-block">Submit</button>
         </form>
       </div>
     </div>

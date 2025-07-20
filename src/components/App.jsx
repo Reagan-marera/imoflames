@@ -4,7 +4,6 @@ import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import Home from './Home';
 import Login from './Login';
 import Register from './Register';
-import ProductList from './ProductList';
 import ProductForm from './ProductForm';
 import PaymentForm from './PaymentForm';
 import Navbar from './Navbar';
@@ -15,6 +14,7 @@ import ContactUsForm from './Contact Us';
 import './App.css';
 import './global.css';
 import UserManagement from './UserManagement';
+import ProductCarousel from './ProductCarousel';
 
 function App() {
   return (
@@ -27,7 +27,7 @@ function App() {
             <Route path="/contact-us" element={<ContactUsForm />} />
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
-            <Route path="/products" element={<ProductList />} />
+            <Route path="/products" element={<div className="container"><ProductCarousel category="All" /></div>} />
             <Route path="/upload" element={<ProductForm />} />
             <Route path="/payment" element={<PaymentForm />} />
             <Route path="/admin" element={<AdminDashboard />} />

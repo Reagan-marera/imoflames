@@ -286,10 +286,6 @@ const ProductList = ({ selectedCategory }) => {
                     <p className="meta-label">Category</p>
                     <p className="meta-value">{selectedProduct.category || 'N/A'}</p>
                   </div>
-                  <div>
-                    <p className="meta-label">Condition</p>
-                    <p className="meta-value">{selectedProduct.condition || 'N/A'}</p>
-                  </div>
                 </div>
                 <div className="modal-actions">
                   <button
