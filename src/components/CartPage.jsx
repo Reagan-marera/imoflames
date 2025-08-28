@@ -2,12 +2,14 @@ import React, { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { API_URL } from '../config';
 import { showToast } from './utils';
+import { useMediaQuery } from 'react-responsive';
 
 const CartPage = () => {
   const [cartItems, setCartItems] = useState([]);
   const [totalPrice, setTotalPrice] = useState(0);
   const navigate = useNavigate();
   const token = localStorage.getItem('token');
+  const isMobile = useMediaQuery({ query: '(max-width: 768px)' });
 
   useEffect(() => {
     const fetchCart = async () => {
@@ -98,49 +100,92 @@ const CartPage = () => {
     );
   }
 
+  const containerStyle = {
+    padding: isMobile ? '1rem' : '2rem',
+    color: '#e0e0e0',
+  };
+
+  const cartContainerStyle = {
+    display: 'flex',
+    flexDirection: isMobile ? 'column' : 'row',
+    gap: '2rem',
+  };
+
+  const cartItemsStyle = {
+    flex: 2,
+  };
+
+  const cartItemStyle = {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '1rem',
+    padding: '1rem',
+    backgroundColor: '#161b22',
+    border: '1px solid #21262d',
+    borderRadius: '8px',
+    marginBottom: '1rem',
+  };
+
+  const cartItemImageStyle = {
+    width: '100px',
+    height: '100px',
+    objectFit: 'contain',
+  };
+
+  const cartSummaryStyle = {
+    flex: 1,
+    padding: '1.5rem',
+    backgroundColor: '#161b22',
+    border: '1px solid #21262d',
+    borderRadius: '8px',
+    position: isMobile ? 'static' : 'sticky',
+    top: '100px',
+    height: 'fit-content',
+  };
+
   return (
-    <div className="container cart-page">
-      <h2 className="section-title">Shopping Cart ({cartItems.length} items)</h2>
-      <div className="cart-container">
-        <div className="cart-items">
+    <div style={containerStyle}>
+      <h2 style={{ textAlign: 'center', marginBottom: '2rem' }}>Shopping Cart ({cartItems.length} items)</h2>
+      <div style={cartContainerStyle}>
+        <div style={cartItemsStyle}>
           {cartItems.map(item => (
-            <div key={item.id} className="cart-item card">
+            <div key={item.id} style={cartItemStyle}>
               <img
                 src={`${API_URL}/api/uploads/${item.image_path}`}
                 alt={item.name}
-                className="cart-item-image"
+                style={cartItemImageStyle}
               />
-              <div className="cart-item-details">
+              <div style={{ flex: 1 }}>
                 <h3>{item.name}</h3>
                 <p>KES {item.price.toFixed(2)}</p>
               </div>
               <button
                 onClick={() => handleRemove(item.id)}
-                className="btn btn-danger"
+                style={{ backgroundColor: '#d73a49' }}
               >
                 Remove
               </button>
             </div>
           ))}
         </div>
-        <div className="cart-summary card">
+        <div style={cartSummaryStyle}>
           <h3>Cart Summary</h3>
-          <div className="summary-row">
+          <div style={{ display: 'flex', justifyContent: 'space-between', margin: '1rem 0' }}>
             <span>Subtotal</span>
             <span>KES {totalPrice.toFixed(2)}</span>
           </div>
-          <div className="summary-row">
+          <div style={{ display: 'flex', justifyContent: 'space-between', margin: '1rem 0' }}>
             <span>Shipping</span>
             <span>FREE</span>
           </div>
-          <hr />
-          <div className="summary-row total">
+          <hr style={{ border: '1px solid #21262d' }} />
+          <div style={{ display: 'flex', justifyContent: 'space-between', margin: '1rem 0', fontWeight: 'bold', fontSize: '1.2rem' }}>
             <span>Total</span>
             <span>KES {totalPrice.toFixed(2)}</span>
           </div>
           <button
             onClick={handleCheckout}
-            className="btn btn-primary btn-block mt-3"
+            style={{ width: '100%', marginTop: '1rem' }}
           >
             Proceed to Checkout
           </button>
