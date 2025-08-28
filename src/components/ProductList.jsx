@@ -6,10 +6,9 @@ import ProductCard from './ProductCard';
 import SearchBar from './SearchBar';
 import { useMediaQuery } from 'react-responsive';
 import { motion, AnimatePresence } from 'framer-motion';
-import reviewsData from '../data/reviews.json';
 import StarRating from './StarRating';
 
-const ProductList = ({ selectedCategory }) => {
+const ProductList = ({ reviews, setReviews, selectedCategory }) => {
   // State
   const [products, setProducts] = useState([]);
   const [selectedProduct, setSelectedProduct] = useState(null);
@@ -31,10 +30,6 @@ const ProductList = ({ selectedCategory }) => {
   const [totalProducts, setTotalProducts] = useState(0);
   const [error, setError] = useState(null);
   const [currentUser, setCurrentUser] = useState(null);
-  const [reviews, setReviews] = useState(() => {
-    const savedReviews = localStorage.getItem('reviews');
-    return savedReviews ? JSON.parse(savedReviews) : reviewsData;
-  });
 
   // Hooks
   const location = useLocation();
@@ -121,10 +116,6 @@ const ProductList = ({ selectedCategory }) => {
   useEffect(() => {
     setCurrentPage(1);
   }, [selectedCategory, searchQuery, filterCategory]);
-
-  useEffect(() => {
-    localStorage.setItem('reviews', JSON.stringify(reviews));
-  }, [reviews]);
 
   // Filter products
   const getFilteredProducts = () => {
@@ -216,6 +207,7 @@ const ProductList = ({ selectedCategory }) => {
       const data = await res.json();
       if (res.ok) {
         showToast('Order placed successfully', 'success');
+        closeProductDetails();
       } else {
         showToast(data.message || 'Error placing order', 'error');
       }

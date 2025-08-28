@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { API_URL } from '../config.js';
 import { showToast } from './utils.js';
@@ -12,6 +12,13 @@ const ProductForm = () => {
   const [category, setCategory] = useState(''); // Add category state
   const token = localStorage.getItem('token');
   const navigate = useNavigate();
+
+  useEffect(() => {
+    if (!token) {
+      showToast('You must be logged in to upload a product.', 'error');
+      navigate('/login');
+    }
+  }, [token, navigate]);
 
   const MAX_IMAGES = 10;
 
