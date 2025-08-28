@@ -35,8 +35,6 @@ const ProductList = ({ selectedCategory }) => {
     const savedReviews = localStorage.getItem('reviews');
     return savedReviews ? JSON.parse(savedReviews) : reviewsData;
   });
-  const [showAllReviews, setShowAllReviews] = useState(false);
-  const [showReviewForm, setShowReviewForm] = useState(false);
 
   // Hooks
   const location = useLocation();
@@ -399,6 +397,43 @@ const ProductList = ({ selectedCategory }) => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
+  const handleRatingChange = (newRating) => {
+    if (!currentUser) {
+      showToast('You must be logged in to rate a product.', 'error');
+      navigate('/login');
+      return;
+    }
+
+    if (!selectedProduct) return;
+
+    const existingReviewIndex = reviews.findIndex(
+      (review) => review.productId === selectedProduct.id && review.userName === currentUser.username
+    );
+
+    let updatedReviews;
+
+    if (existingReviewIndex !== -1) {
+      updatedReviews = reviews.map((review, index) => {
+        if (index === existingReviewIndex) {
+          return { ...review, rating: newRating };
+        }
+        return review;
+      });
+      showToast('Your rating has been updated!', 'success');
+    } else {
+      const newReview = {
+        productId: selectedProduct.id,
+        userName: currentUser.username,
+        rating: newRating,
+        comment: '',
+      };
+      updatedReviews = [...reviews, newReview];
+      showToast('Thank you for your rating!', 'success');
+    }
+
+    setReviews(updatedReviews);
+  };
+
   // Render
   if (isLoading) {
     return (
@@ -739,6 +774,7 @@ const ProductList = ({ selectedCategory }) => {
             {product && (
               <ProductCard
                 product={product}
+                reviews={reviews.filter(r => r.productId === product.id)}
                 onSelect={openProductDetails}
                 onBuy={handleBuy}
                 onAddToCart={handleAddToCart}
@@ -1096,75 +1132,39 @@ const ProductList = ({ selectedCategory }) => {
                 </p>
               </div>
 
-              {/* Reviews Section */}
-              <div style={{ marginTop: '16px' }}>
-                <h4 style={{ marginBottom: '8px', color: '#e0e0e0', fontSize: '20px' }}>Reviews</h4>
-                <div style={{ maxHeight: '200px', overflowY: 'auto', border: '1px solid #21262d', borderRadius: '4px', padding: '8px', backgroundColor: '#0d1117' }}>
-                  {reviews.filter(r => r.productId === selectedProduct.id).slice(0, showAllReviews ? reviews.length : 3).map((review, index) => (
-                    <div key={index} style={{ marginBottom: '8px', borderBottom: '1px solid #21262d', paddingBottom: '8px', position: 'relative' }}>
-                      <p style={{ fontWeight: 'bold', color: '#e0e0e0' }}>{review.userName}</p>
-                      <StarRating rating={review.rating} />
-                      <p style={{ color: '#8b949e', marginTop: '4px' }}>{review.comment}</p>
-                      {(currentUser?.is_admin || currentUser?.username === review.userName) && (
-                        <button
-                          onClick={() => {
-                            const newReviews = reviews.filter((_, i) => i !== index);
-                            setReviews(newReviews);
-                          }}
-                          style={{ position: 'absolute', top: '8px', right: '8px', background: 'none', border: 'none', color: '#d73a49', cursor: 'pointer' }}
-                        >
-                          Delete
-                        </button>
-                      )}
-                    </div>
-                  ))}
-                </div>
-                {reviews.filter(r => r.productId === selectedProduct.id).length > 3 && (
-                  <button onClick={() => setShowAllReviews(!showAllReviews)} style={{ marginTop: '10px', width: '100%', padding: '8px' }}>
-                    {showAllReviews ? 'Show Less' : 'Show More'}
-                  </button>
-                )}
-                {currentUser && (
-                  <button onClick={() => setShowReviewForm(!showReviewForm)} style={{ marginTop: '10px', width: '100%', padding: '8px' }}>
-                    {showReviewForm ? 'Cancel' : 'Write a Review'}
-                  </button>
-                )}
-                {showReviewForm && currentUser ? (
-                  <form
-                    onSubmit={(e) => {
-                      e.preventDefault();
-                      const newReview = {
-                        productId: selectedProduct.id,
-                        userName: currentUser.username,
-                        rating: parseInt(e.target.rating.value),
-                        comment: e.target.comment.value,
-                      };
-                      setReviews([...reviews, newReview]);
-                      setShowReviewForm(false);
-                      showToast('Thank you for your review!', 'success');
-                      e.target.reset();
-                    }}
-                    style={{ marginTop: '16px' }}
-                  >
-                    <h5 style={{ marginBottom: '8px', color: '#e0e0e0', fontSize: '18px' }}>Leave a Review</h5>
-                    <select name="rating" required style={{ width: '100%', padding: '8px', marginBottom: '8px' }}>
-                      <option value="">Select Rating</option>
-                      <option value="1">1 Star</option>
-                      <option value="2">2 Stars</option>
-                      <option value="3">3 Stars</option>
-                      <option value="4">4 Stars</option>
-                      <option value="5">5 Stars</option>
-                    </select>
-                    <textarea name="comment" placeholder="Your review..." required style={{ width: '100%', padding: '8px', marginBottom: '8px', minHeight: '80px' }}></textarea>
-                    <button type="submit" style={{ width: '100%', padding: '10px' }}>Submit Review</button>
-                  </form>
+              {/* New Rating Section */}
+              <div style={{ marginTop: '16px', borderTop: '1px solid #21262d', paddingTop: '16px' }}>
+                <h4 style={{ marginBottom: '8px', color: '#e0e0e0', fontSize: '20px', textAlign: 'center' }}>
+                  {currentUser ? 'Rate this Product' : 'Log in to Rate'}
+                </h4>
+                {currentUser ? (
+                  <div style={{ display: 'flex', justifyContent: 'center' }}>
+                    <StarRating
+                      size={32}
+                      rating={
+                        reviews.find(r => r.productId === selectedProduct.id && r.userName === currentUser.username)?.rating || 0
+                      }
+                      onRatingChange={handleRatingChange}
+                    />
+                  </div>
                 ) : (
-                  !currentUser && (
-                    <p style={{ marginTop: '16px', color: '#8b949e' }}>
-                      You must be logged in to leave a review. <Link to="/login">Login now</Link>
-                    </p>
-                  )
+                   <p style={{ textAlign: 'center', color: '#8b949e' }}>
+                     <Link to="/login">Login</Link> to share your opinion.
+                   </p>
                 )}
+                <div style={{textAlign: 'center', marginTop: '10px', color: '#8b949e'}}>
+                  <p>Average rating:</p>
+                  <StarRating
+                      rating={
+                          (() => {
+                              const productReviews = reviews.filter(r => r.productId === selectedProduct.id);
+                              if (productReviews.length === 0) return 0;
+                              const avg = productReviews.reduce((acc, r) => acc + r.rating, 0) / productReviews.length;
+                              return avg;
+                          })()
+                      }
+                  />
+                </div>
               </div>
 
               {/* Category */}
