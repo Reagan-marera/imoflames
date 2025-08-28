@@ -229,7 +229,8 @@ const ProductList = ({ selectedCategory }) => {
         headers: { Authorization: `Bearer ${token}` },
       });
       if (res.ok) {
-        showToast('Added to cart', 'success');
+        showToast('Successfully added to cart', 'success');
+        window.dispatchEvent(new Event('cartUpdated'));
       } else {
         const error = await res.json();
         showToast(error.message || 'Could not add to cart', 'error');
@@ -1018,9 +1019,9 @@ const ProductList = ({ selectedCategory }) => {
               {/* Product Name */}
               <h3
                 style={{
-                  color: '#333',
-                  margin: '0 0 6px 0',
-                  fontSize: '14px',
+                  color: '#e0e0e0',
+                  margin: '0 0 10px 0',
+                  fontSize: '24px',
                   fontWeight: '600',
                   textAlign: 'center',
                 }}
@@ -1030,10 +1031,10 @@ const ProductList = ({ selectedCategory }) => {
               {/* Product Price */}
               <p
                 style={{
-                  fontSize: '15px',
+                  fontSize: '22px',
                   fontWeight: '600',
-                  color: '#ff9f00',
-                  margin: '0 0 8px 0',
+                  color: '#00aaff',
+                  margin: '0 0 16px 0',
                   textAlign: 'center',
                 }}
               >
@@ -1042,29 +1043,29 @@ const ProductList = ({ selectedCategory }) => {
               {/* Description */}
               <div
                 style={{
-                  backgroundColor: '#f9f9f9',
-                  padding: '8px',
+                  backgroundColor: '#0d1117',
+                  padding: '12px',
                   borderRadius: '4px',
-                  marginBottom: '8px',
-                  borderLeft: '3px solid #ff9f00',
-                  fontSize: '12px',
-                  lineHeight: '1.4',
+                  marginBottom: '16px',
+                  borderLeft: '3px solid #00aaff',
+                  fontSize: '16px',
+                  lineHeight: '1.6',
                 }}
               >
-                <p style={{ color: '#666', margin: 0 }}>
+                <p style={{ color: '#8b949e', margin: 0 }}>
                   {selectedProduct.description}
                 </p>
               </div>
 
               {/* Reviews Section */}
               <div style={{ marginTop: '16px' }}>
-                <h4 style={{ marginBottom: '8px', color: '#333' }}>Reviews</h4>
-                <div style={{ maxHeight: '150px', overflowY: 'auto', border: '1px solid #eee', borderRadius: '4px', padding: '8px' }}>
+                <h4 style={{ marginBottom: '8px', color: '#e0e0e0', fontSize: '20px' }}>Reviews</h4>
+                <div style={{ maxHeight: '200px', overflowY: 'auto', border: '1px solid #21262d', borderRadius: '4px', padding: '8px', backgroundColor: '#0d1117' }}>
                   {reviews.filter(r => r.productId === selectedProduct.id).map((review, index) => (
-                    <div key={index} style={{ marginBottom: '8px', borderBottom: '1px solid #eee', paddingBottom: '8px', position: 'relative' }}>
-                      <p style={{ fontWeight: 'bold', color: '#333' }}>{review.userName}</p>
+                    <div key={index} style={{ marginBottom: '8px', borderBottom: '1px solid #21262d', paddingBottom: '8px', position: 'relative' }}>
+                      <p style={{ fontWeight: 'bold', color: '#e0e0e0' }}>{review.userName}</p>
                       <StarRating rating={review.rating} />
-                      <p style={{ color: '#666', marginTop: '4px' }}>{review.comment}</p>
+                      <p style={{ color: '#8b949e', marginTop: '4px' }}>{review.comment}</p>
                       {(currentUser?.is_admin || currentUser?.username === review.userName) && (
                         <button
                           onClick={() => {
@@ -1095,7 +1096,7 @@ const ProductList = ({ selectedCategory }) => {
                     }}
                     style={{ marginTop: '16px' }}
                   >
-                    <h5 style={{ marginBottom: '8px', color: '#333' }}>Leave a Review</h5>
+                    <h5 style={{ marginBottom: '8px', color: '#e0e0e0', fontSize: '18px' }}>Leave a Review</h5>
                     <select name="rating" required style={{ width: '100%', padding: '8px', marginBottom: '8px' }}>
                       <option value="">Select Rating</option>
                       <option value="1">1 Star</option>
@@ -1104,11 +1105,11 @@ const ProductList = ({ selectedCategory }) => {
                       <option value="4">4 Stars</option>
                       <option value="5">5 Stars</option>
                     </select>
-                    <textarea name="comment" placeholder="Your review..." required style={{ width: '100%', padding: '8px', marginBottom: '8px', minHeight: '60px' }}></textarea>
-                    <button type="submit" style={{ width: '100%', padding: '8px' }}>Submit Review</button>
+                    <textarea name="comment" placeholder="Your review..." required style={{ width: '100%', padding: '8px', marginBottom: '8px', minHeight: '80px' }}></textarea>
+                    <button type="submit" style={{ width: '100%', padding: '10px' }}>Submit Review</button>
                   </form>
                 ) : (
-                  <p style={{ marginTop: '16px', color: '#666' }}>
+                  <p style={{ marginTop: '16px', color: '#8b949e' }}>
                     You must be logged in to leave a review. <Link to="/login">Login now</Link>
                   </p>
                 )}
@@ -1116,16 +1117,16 @@ const ProductList = ({ selectedCategory }) => {
               {/* Category */}
               <div
                 style={{
-                  backgroundColor: '#f9f9f9',
-                  padding: '6px 8px',
+                  backgroundColor: '#0d1117',
+                  padding: '10px',
                   borderRadius: '4px',
-                  border: '1px solid #ddd',
-                  marginBottom: '8px',
-                  fontSize: '12px',
+                  border: '1px solid #21262d',
+                  marginBottom: '16px',
+                  fontSize: '16px',
                 }}
               >
-                <p style={{ color: '#666', margin: '0 0 3px 0' }}>Category</p>
-                <p style={{ color: '#333', fontWeight: '500', margin: 0 }}>
+                <p style={{ color: '#8b949e', margin: '0 0 5px 0' }}>Category</p>
+                <p style={{ color: '#e0e0e0', fontWeight: '500', margin: 0 }}>
                   {selectedProduct.category || 'N/A'}
                 </p>
               </div>
