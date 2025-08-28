@@ -1,7 +1,6 @@
 import React from 'react';
 import { API_URL } from '../config';
 import StarRating from './StarRating';
-import reviews from '../data/reviews.json';
 
 const ProductCard = ({
   product,
@@ -13,8 +12,8 @@ const ProductCard = ({
   currentUser,
   isMobile,
   jumiaStyle = true,
+  reviews: productReviews = [],
 }) => {
-  const productReviews = reviews.filter(review => review.productId === product.id);
   const averageRating = productReviews.length > 0
     ? productReviews.reduce((acc, review) => acc + review.rating, 0) / productReviews.length
     : 0;

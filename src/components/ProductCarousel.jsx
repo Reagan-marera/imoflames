@@ -2,9 +2,14 @@ import React, { useEffect, useState } from 'react';
 import { API_URL } from '../config';
 import ProductCard from './ProductCard';
 import { showToast } from './utils';
+import reviewsData from '../data/reviews.json';
 
 const ProductCarousel = ({ category }) => {
   const [products, setProducts] = useState([]);
+  const [reviews, setReviews] = useState(() => {
+    const savedReviews = localStorage.getItem('reviews');
+    return savedReviews ? JSON.parse(savedReviews) : reviewsData;
+  });
 
   useEffect(() => {
     const fetchProducts = async () => {
@@ -32,9 +37,10 @@ const ProductCarousel = ({ category }) => {
     <div className="product-carousel">
       <h2 className="carousel-title">{category}</h2>
       <div className="carousel-track">
-        {products.map(product => (
-          <ProductCard key={product.id} product={product} />
-        ))}
+        {products.map(product => {
+          const productReviews = reviews.filter(r => r.productId === product.id);
+          return <ProductCard key={product.id} product={product} reviews={productReviews} />;
+        })}
       </div>
     </div>
   );
