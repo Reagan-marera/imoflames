@@ -1,0 +1,20 @@
+[
+  {
+    "productId": 1,
+    "userName": "Jules",
+    "rating": 5,
+    "comment": "This is a fantastic product! Highly recommended."
+  },
+  {
+    "productId": 1,
+    "userName": "Jane Doe",
+    "rating": 4,
+    "comment": "Very good, but the battery could be better."
+  },
+  {
+    "productId": 2,
+    "userName": "John Smith",
+    "rating": 5,
+    "comment": "Excellent value for the price."
+  }
+]
