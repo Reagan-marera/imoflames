@@ -1,128 +1,61 @@
 .search-container {
   width: 100%;
-  max-width: 400px; /* Reduced for small screens */
+  max-width: 800px;
   margin: 0 auto;
-  padding: 0.5rem; /* Reduced padding */
-  box-sizing: border-box;
+  padding: 10px;
 }
 
 .search-form {
   display: flex;
-  flex-direction: column;
-  gap: 0.5rem; /* Reduced gap */
-  align-items: stretch;
+  width: 100%;
 }
 
 .search-input-group {
   display: flex;
-  flex-direction: column;
-  gap: 0.5rem; /* Reduced gap */
   width: 100%;
+  align-items: center;
+  gap: 10px;
 }
 
 .search-input {
-  width: 100%;
-  padding: 0.5rem; /* Reduced padding */
+  flex: 1;
+  padding: 10px 15px;
   border: 1px solid #ccc;
   border-radius: 4px;
-  font-size: 0.875rem; /* Smaller font */
-  box-sizing: border-box;
+  font-size: 16px;
 }
 
 .price-inputs {
   display: flex;
   align-items: center;
-  gap: 0.375rem; /* Reduced gap */
-  width: 100%;
+  gap: 5px;
 }
 
 .price-input {
-  flex: 1;
-  padding: 0.5rem; /* Reduced padding */
+  width: 80px;
+  padding: 10px;
   border: 1px solid #ccc;
   border-radius: 4px;
-  font-size: 0.875rem; /* Smaller font */
-  box-sizing: border-box;
+  font-size: 14px;
 }
 
 .price-separator {
-  font-size: 0.875rem; /* Smaller font */
-}
-
-.category-select {
-  width: 100%;
-  padding: 0.5rem; /* Reduced padding */
-  border: 1px solid #ccc;
-  border-radius: 4px;
-  font-size: 0.875rem; /* Smaller font */
-  box-sizing: border-box;
+  font-size: 16px;
+  color: #666;
 }
 
 .search-button {
-  width: 100%;
-  padding: 0.5rem; /* Reduced padding */
-  background: #ff6600;
+  padding: 10px 15px;
+  background-color: #00aaff;
   color: white;
   border: none;
   border-radius: 4px;
   cursor: pointer;
-  font-size: 0.875rem; /* Smaller font */
   display: flex;
   align-items: center;
   justify-content: center;
 }
 
 .search-button:hover {
-  background: #e55a00;
-}
-
-/* For larger screens (tablet/desktop) */
-@media (min-width: 768px) {
-  .search-container {
-    max-width: 600px; /* Slightly reduced for better fit */
-  }
-
-  .search-form {
-    flex-direction: row;
-    align-items: center;
-    gap: 0.5rem; /* Reduced gap */
-  }
-
-  .search-input-group {
-    flex-direction: row;
-    flex-wrap: wrap;
-    gap: 0.5rem; /* Reduced gap */
-  }
-
-  .search-input {
-    flex: 2;
-    min-width: 150px; /* Reduced min-width */
-    padding: 0.625rem; /* Slightly reduced padding */
-    font-size: 0.9375rem; /* Slightly smaller font */
-  }
-
-  .price-inputs {
-    flex: 1;
-    min-width: 150px; /* Reduced min-width */
-    gap: 0.375rem; /* Reduced gap */
-  }
-
-  .price-input {
-    padding: 0.5rem; /* Reduced padding */
-    font-size: 0.875rem; /* Smaller font */
-  }
-
-  .category-select {
-    flex: 1;
-    min-width: 120px; /* Reduced min-width */
-    padding: 0.5rem; /* Reduced padding */
-    font-size: 0.875rem; /* Smaller font */
-  }
-
-  .search-button {
-    flex: 0 0 auto;
-    width: auto;
-    padding: 0.5rem 1rem; /* Reduced padding */
-    font-size: 0.875rem; /* Smaller font */
-  }
+  background-color: #0088cc;
 }

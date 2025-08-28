@@ -53,7 +53,6 @@ const ProductList = ({ selectedCategory }) => {
     { name: 'Gaming', color: '#8a2be2' },
     { name: 'Accessories', color: '#4CAF50' },
   ];
-
   const [filterCategory, setFilterCategory] = useState('All');
   const productsPerPage = isMobile ? 12 : isTablet ? 16 : 20;
 
@@ -91,16 +90,13 @@ const ProductList = ({ selectedCategory }) => {
         if (selectedCategory) queryParams.set('category', selectedCategory);
         if (searchQuery) queryParams.set('search', searchQuery);
         if (filterCategory !== 'All') queryParams.set('category', filterCategory);
-
         const headers = {};
         if (token) headers.Authorization = `Bearer ${token}`;
-
         const res = await fetch(`${API_URL}/api/products?${queryParams.toString()}`, { headers });
         if (!res.ok) {
           const errorText = await res.text();
           throw new Error(`Failed to fetch products: ${res.status} ${errorText}`);
         }
-
         const data = await res.json();
         setProducts(data.products || []);
         setTotalPages(data.totalPages || 1);
@@ -130,12 +126,15 @@ const ProductList = ({ selectedCategory }) => {
   const getFilteredProducts = () => {
     try {
       if (!Array.isArray(products)) return [];
+
+      const searchLower = searchQuery.toLowerCase();
+
       return products.filter((product) => {
         if (!product) return false;
-        const categoryMatch = filterCategory === 'All' || product.category === filterCategory;
-        if (!searchQuery) return categoryMatch;
 
-        const searchLower = searchQuery.toLowerCase();
+        const categoryMatch = filterCategory === 'All' || product.category === filterCategory;
+
+        if (!searchQuery) return categoryMatch;
 
         // Handle price range queries (e.g., "500-1000")
         const priceRangeMatch = searchQuery.match(/^(\d+)-(\d+)$/);
@@ -344,17 +343,14 @@ const ProductList = ({ selectedCategory }) => {
       formData.append('description', editFormData.description);
       formData.append('price', editFormData.price);
       formData.append('category', editFormData.category);
-
       editImages.forEach((file) => {
         formData.append('images', file);
       });
-
       const res = await fetch(`${API_URL}/api/products/${editingProduct.id}`, {
         method: 'PUT',
         headers: { Authorization: `Bearer ${token}` },
         body: formData,
       });
-
       if (res.ok) {
         const updatedProduct = await res.json();
         setProducts(products.map((p) => (p.id === updatedProduct.id ? updatedProduct : p)));
@@ -389,6 +385,7 @@ const ProductList = ({ selectedCategory }) => {
 
   const handleSearch = (query) => {
     setSearchQuery(query);
+    setCurrentPage(1);
   };
 
   const handlePageChange = (page) => {
@@ -403,15 +400,11 @@ const ProductList = ({ selectedCategory }) => {
       navigate('/login');
       return;
     }
-
     if (!selectedProduct) return;
-
     const existingReviewIndex = reviews.findIndex(
       (review) => review.productId === selectedProduct.id && review.userName === currentUser.username
     );
-
     let updatedReviews;
-
     if (existingReviewIndex !== -1) {
       updatedReviews = reviews.map((review, index) => {
         if (index === existingReviewIndex) {
@@ -430,7 +423,6 @@ const ProductList = ({ selectedCategory }) => {
       updatedReviews = [...reviews, newReview];
       showToast('Thank you for your rating!', 'success');
     }
-
     setReviews(updatedReviews);
   };
 

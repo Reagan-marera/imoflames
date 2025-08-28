@@ -401,3 +401,22 @@ body.logout-animation {
     font-size: 1.5rem;
   }
 }
+.flammable-flame {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 40px;
+  margin-right: 8px;
+}
+
+.flammable-flame svg {
+  width: 100%;
+  height: 100%;
+}
+
+.logo-text {
+  font-weight: bold;
+  font-size: 18px;
+  margin-left: 5px;
+}
