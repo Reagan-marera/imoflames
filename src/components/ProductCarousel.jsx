@@ -2,14 +2,8 @@ import React, { useEffect, useState } from 'react';
 import { API_URL } from '../config';
 import ProductCard from './ProductCard';
 import { showToast } from './utils';
-import reviewsData from '../data/reviews.json';
-
-const ProductCarousel = ({ category }) => {
+const ProductCarousel = ({ category, reviews }) => {
   const [products, setProducts] = useState([]);
-  const [reviews, setReviews] = useState(() => {
-    const savedReviews = localStorage.getItem('reviews');
-    return savedReviews ? JSON.parse(savedReviews) : reviewsData;
-  });
 
   useEffect(() => {
     const fetchProducts = async () => {
