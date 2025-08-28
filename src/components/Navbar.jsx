@@ -15,6 +15,7 @@ const Navbar = () => {
   const [currentUser, setCurrentUser] = useState(null);
   const [menuOpen, setMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
+  const [cartCount, setCartCount] = useState(0);
   const [hoveringLogo, setHoveringLogo] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
@@ -45,6 +46,36 @@ const Navbar = () => {
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
+
+  useEffect(() => {
+    const fetchCartCount = async () => {
+      const token = localStorage.getItem('token');
+      if (!token) {
+        setCartCount(0);
+        return;
+      }
+      try {
+        const res = await fetch('/api/cart', {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        if (res.ok) {
+          const data = await res.json();
+          setCartCount(data.length);
+        } else {
+          setCartCount(0);
+        }
+      } catch (error) {
+        setCartCount(0);
+      }
+    };
+
+    fetchCartCount();
+    window.addEventListener('cartUpdated', fetchCartCount);
+
+    return () => {
+      window.removeEventListener('cartUpdated', fetchCartCount);
+    };
+  }, [location]);
 
   const toggleDarkMode = () => {
     setDarkMode(prev => !prev);
@@ -93,7 +124,7 @@ const Navbar = () => {
         </motion.div>
 
         <ul className="desktop-menu">
-          <DesktopNavLinks currentUser={currentUser} handleLogout={handleLogout} darkMode={darkMode} />
+          <DesktopNavLinks currentUser={currentUser} handleLogout={handleLogout} darkMode={darkMode} cartCount={cartCount} />
           <ThemeToggle darkMode={darkMode} toggle={toggleDarkMode} />
         </ul>
 
@@ -137,7 +168,7 @@ const Navbar = () => {
               exit={{ x: '100%' }}
               transition={{ type: 'spring', stiffness: 300, damping: 30 }}
             >
-              <MobileNavLinks currentUser={currentUser} handleLogout={handleLogout} closeMenu={toggleMenu} darkMode={darkMode} />
+              <MobileNavLinks currentUser={currentUser} handleLogout={handleLogout} closeMenu={toggleMenu} darkMode={darkMode} cartCount={cartCount} />
               <ThemeToggle darkMode={darkMode} toggle={toggleDarkMode} mobile />
             </motion.ul>
           </>
@@ -147,14 +178,14 @@ const Navbar = () => {
   );
 };
 
-const DesktopNavLinks = ({ currentUser, handleLogout, darkMode }) => (
+const DesktopNavLinks = ({ currentUser, handleLogout, darkMode, cartCount }) => (
   <>
     <NavLinkItem path="/" icon={<FaHome />} label="Home" darkMode={darkMode} />
     <NavLinkItem path="/contact-us" icon={<FaEnvelope />} label="Contact" darkMode={darkMode} />
     {currentUser ? (
       <>
         <NavLinkItem path="/upload" icon={<FaUpload />} label="Upload" darkMode={darkMode} />
-        <NavLinkItem path="/cart" icon={<FaShoppingCart />} label="Cart" darkMode={darkMode} />
+        <NavLinkItem path="/cart" icon={<FaShoppingCart />} label="Cart" darkMode={darkMode} count={cartCount} />
         <ProfileDropdown currentUser={currentUser} handleLogout={handleLogout} darkMode={darkMode} />
       </>
     ) : (
@@ -168,14 +199,14 @@ const DesktopNavLinks = ({ currentUser, handleLogout, darkMode }) => (
   </>
 );
 
-const MobileNavLinks = ({ currentUser, handleLogout, closeMenu, darkMode }) => (
+const MobileNavLinks = ({ currentUser, handleLogout, closeMenu, darkMode, cartCount }) => (
   <>
     <NavLinkItemMobile path="/" icon={<FaHome />} label="Home" closeMenu={closeMenu} darkMode={darkMode} />
     <NavLinkItemMobile path="/contact-us" icon={<FaEnvelope />} label="Contact" closeMenu={closeMenu} darkMode={darkMode} />
     {currentUser ? (
       <>
         <NavLinkItemMobile path="/upload" icon={<FaUpload />} label="Upload" closeMenu={closeMenu} darkMode={darkMode} />
-        <NavLinkItemMobile path="/cart" icon={<FaShoppingCart />} label="Cart" closeMenu={closeMenu} darkMode={darkMode} />
+        <NavLinkItemMobile path="/cart" icon={<FaShoppingCart />} label="Cart" closeMenu={closeMenu} darkMode={darkMode} count={cartCount} />
         <motion.li
           whileHover={{ scale: 1.05 }}
           whileTap={{ scale: 0.95 }}
@@ -196,7 +227,7 @@ const MobileNavLinks = ({ currentUser, handleLogout, closeMenu, darkMode }) => (
   </>
 );
 
-const NavLinkItem = ({ path, icon, label, darkMode }) => {
+const NavLinkItem = ({ path, icon, label, darkMode, count }) => {
   const location = useLocation();
   const isActive = location.pathname === path;
   
@@ -209,8 +240,12 @@ const NavLinkItem = ({ path, icon, label, darkMode }) => {
         <motion.span 
           className="nav-icon"
           whileHover={{ scale: 1.2 }}
+          style={{ position: 'relative' }}
         >
           {icon}
+          {count > 0 && (
+            <span className="cart-badge">{count}</span>
+          )}
         </motion.span>
         <span className="nav-label">{label}</span>
         <motion.span 
@@ -224,7 +259,7 @@ const NavLinkItem = ({ path, icon, label, darkMode }) => {
   );
 };
 
-const NavLinkItemMobile = ({ path, icon, label, closeMenu, darkMode }) => {
+const NavLinkItemMobile = ({ path, icon, label, closeMenu, darkMode, count }) => {
   const navigate = useNavigate();
   const location = useLocation();
   const isActive = location.pathname === path;
@@ -239,7 +274,12 @@ const NavLinkItemMobile = ({ path, icon, label, closeMenu, darkMode }) => {
         onClick={() => { navigate(path); closeMenu(); }} 
         className={`nav-link-mobile ${darkMode ? 'dark-mode' : ''} ${isActive ? 'active' : ''}`}
       >
-        <motion.span className="nav-icon">{icon}</motion.span>
+        <motion.span className="nav-icon" style={{ position: 'relative' }}>
+          {icon}
+          {count > 0 && (
+            <span className="cart-badge">{count}</span>
+          )}
+        </motion.span>
         <span className="nav-label">{label}</span>
         <motion.span 
           className="nav-underline"

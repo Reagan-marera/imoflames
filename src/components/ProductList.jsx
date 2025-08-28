@@ -32,7 +32,10 @@ const ProductList = ({ selectedCategory }) => {
   const [totalProducts, setTotalProducts] = useState(0);
   const [error, setError] = useState(null);
   const [currentUser, setCurrentUser] = useState(null);
-  const [reviews, setReviews] = useState(reviewsData);
+  const [reviews, setReviews] = useState(() => {
+    const savedReviews = localStorage.getItem('reviews');
+    return savedReviews ? JSON.parse(savedReviews) : reviewsData;
+  });
 
   // Hooks
   const location = useLocation();
@@ -118,6 +121,10 @@ const ProductList = ({ selectedCategory }) => {
   useEffect(() => {
     setCurrentPage(1);
   }, [selectedCategory, searchQuery, filterCategory]);
+
+  useEffect(() => {
+    localStorage.setItem('reviews', JSON.stringify(reviews));
+  }, [reviews]);
 
   // Filter products
   const getFilteredProducts = () => {
@@ -912,16 +919,17 @@ const ProductList = ({ selectedCategory }) => {
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.9, opacity: 0 }}
               style={{
-                backgroundColor: '#fff',
-                borderRadius: '6px',
-                width: '90%',
-                maxWidth: '320px',
-                maxHeight: '80vh',
-                padding: '10px',
+                backgroundColor: '#161b22',
+                borderRadius: '10px',
+                width: '100%',
+                maxWidth: isMobile ? '95vw' : '800px',
+                maxHeight: isMobile ? '95vh' : '90vh',
+                padding: isMobile ? '15px' : '30px',
+                position: 'relative',
                 overflowY: 'auto',
-                color: '#333',
-                boxShadow: '0 2px 10px rgba(0,0,0,0.2)',
-                border: '1px solid #eee',
+                color: '#e0e0e0',
+                boxShadow: '0 0 30px rgba(0,170,255,0.5)',
+                border: '1px solid #00aaff',
               }}
             >
               {/* Close Button */}
@@ -1053,40 +1061,57 @@ const ProductList = ({ selectedCategory }) => {
                 <h4 style={{ marginBottom: '8px', color: '#333' }}>Reviews</h4>
                 <div style={{ maxHeight: '150px', overflowY: 'auto', border: '1px solid #eee', borderRadius: '4px', padding: '8px' }}>
                   {reviews.filter(r => r.productId === selectedProduct.id).map((review, index) => (
-                    <div key={index} style={{ marginBottom: '8px', borderBottom: '1px solid #eee', paddingBottom: '8px' }}>
+                    <div key={index} style={{ marginBottom: '8px', borderBottom: '1px solid #eee', paddingBottom: '8px', position: 'relative' }}>
                       <p style={{ fontWeight: 'bold', color: '#333' }}>{review.userName}</p>
                       <StarRating rating={review.rating} />
                       <p style={{ color: '#666', marginTop: '4px' }}>{review.comment}</p>
+                      {(currentUser?.is_admin || currentUser?.username === review.userName) && (
+                        <button
+                          onClick={() => {
+                            const newReviews = reviews.filter((_, i) => i !== index);
+                            setReviews(newReviews);
+                          }}
+                          style={{ position: 'absolute', top: '8px', right: '8px', background: 'none', border: 'none', color: '#d73a49', cursor: 'pointer' }}
+                        >
+                          Delete
+                        </button>
+                      )}
                     </div>
                   ))}
                 </div>
-                <form
-                  onSubmit={(e) => {
-                    e.preventDefault();
-                    const newReview = {
-                      productId: selectedProduct.id,
-                      userName: currentUser ? currentUser.username : 'Anonymous',
-                      rating: parseInt(e.target.rating.value),
-                      comment: e.target.comment.value,
-                    };
-                    setReviews([...reviews, newReview]);
-                    showToast('Thank you for your review!', 'success');
-                    e.target.reset();
-                  }}
-                  style={{ marginTop: '16px' }}
-                >
-                  <h5 style={{ marginBottom: '8px', color: '#333' }}>Leave a Review</h5>
-                  <select name="rating" required style={{ width: '100%', padding: '8px', marginBottom: '8px' }}>
-                    <option value="">Select Rating</option>
-                    <option value="1">1 Star</option>
-                    <option value="2">2 Stars</option>
-                    <option value="3">3 Stars</option>
-                    <option value="4">4 Stars</option>
-                    <option value="5">5 Stars</option>
-                  </select>
-                  <textarea name="comment" placeholder="Your review..." required style={{ width: '100%', padding: '8px', marginBottom: '8px', minHeight: '60px' }}></textarea>
-                  <button type="submit" style={{ width: '100%', padding: '8px' }}>Submit Review</button>
-                </form>
+                {currentUser ? (
+                  <form
+                    onSubmit={(e) => {
+                      e.preventDefault();
+                      const newReview = {
+                        productId: selectedProduct.id,
+                        userName: currentUser.username,
+                        rating: parseInt(e.target.rating.value),
+                        comment: e.target.comment.value,
+                      };
+                      setReviews([...reviews, newReview]);
+                      showToast('Thank you for your review!', 'success');
+                      e.target.reset();
+                    }}
+                    style={{ marginTop: '16px' }}
+                  >
+                    <h5 style={{ marginBottom: '8px', color: '#333' }}>Leave a Review</h5>
+                    <select name="rating" required style={{ width: '100%', padding: '8px', marginBottom: '8px' }}>
+                      <option value="">Select Rating</option>
+                      <option value="1">1 Star</option>
+                      <option value="2">2 Stars</option>
+                      <option value="3">3 Stars</option>
+                      <option value="4">4 Stars</option>
+                      <option value="5">5 Stars</option>
+                    </select>
+                    <textarea name="comment" placeholder="Your review..." required style={{ width: '100%', padding: '8px', marginBottom: '8px', minHeight: '60px' }}></textarea>
+                    <button type="submit" style={{ width: '100%', padding: '8px' }}>Submit Review</button>
+                  </form>
+                ) : (
+                  <p style={{ marginTop: '16px', color: '#666' }}>
+                    You must be logged in to leave a review. <Link to="/login">Login now</Link>
+                  </p>
+                )}
               </div>
               {/* Category */}
               <div
