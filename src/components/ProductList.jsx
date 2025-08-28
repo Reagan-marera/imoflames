@@ -35,6 +35,8 @@ const ProductList = ({ selectedCategory }) => {
     const savedReviews = localStorage.getItem('reviews');
     return savedReviews ? JSON.parse(savedReviews) : reviewsData;
   });
+  const [showAllReviews, setShowAllReviews] = useState(false);
+  const [showReviewForm, setShowReviewForm] = useState(false);
 
   // Hooks
   const location = useLocation();
@@ -1098,7 +1100,7 @@ const ProductList = ({ selectedCategory }) => {
               <div style={{ marginTop: '16px' }}>
                 <h4 style={{ marginBottom: '8px', color: '#e0e0e0', fontSize: '20px' }}>Reviews</h4>
                 <div style={{ maxHeight: '200px', overflowY: 'auto', border: '1px solid #21262d', borderRadius: '4px', padding: '8px', backgroundColor: '#0d1117' }}>
-                  {reviews.filter(r => r.productId === selectedProduct.id).map((review, index) => (
+                  {reviews.filter(r => r.productId === selectedProduct.id).slice(0, showAllReviews ? reviews.length : 3).map((review, index) => (
                     <div key={index} style={{ marginBottom: '8px', borderBottom: '1px solid #21262d', paddingBottom: '8px', position: 'relative' }}>
                       <p style={{ fontWeight: 'bold', color: '#e0e0e0' }}>{review.userName}</p>
                       <StarRating rating={review.rating} />
@@ -1117,7 +1119,17 @@ const ProductList = ({ selectedCategory }) => {
                     </div>
                   ))}
                 </div>
-                {currentUser ? (
+                {reviews.filter(r => r.productId === selectedProduct.id).length > 3 && (
+                  <button onClick={() => setShowAllReviews(!showAllReviews)} style={{ marginTop: '10px', width: '100%', padding: '8px' }}>
+                    {showAllReviews ? 'Show Less' : 'Show More'}
+                  </button>
+                )}
+                {currentUser && (
+                  <button onClick={() => setShowReviewForm(!showReviewForm)} style={{ marginTop: '10px', width: '100%', padding: '8px' }}>
+                    {showReviewForm ? 'Cancel' : 'Write a Review'}
+                  </button>
+                )}
+                {showReviewForm && currentUser ? (
                   <form
                     onSubmit={(e) => {
                       e.preventDefault();
@@ -1128,6 +1140,7 @@ const ProductList = ({ selectedCategory }) => {
                         comment: e.target.comment.value,
                       };
                       setReviews([...reviews, newReview]);
+                      setShowReviewForm(false);
                       showToast('Thank you for your review!', 'success');
                       e.target.reset();
                     }}
@@ -1146,9 +1159,11 @@ const ProductList = ({ selectedCategory }) => {
                     <button type="submit" style={{ width: '100%', padding: '10px' }}>Submit Review</button>
                   </form>
                 ) : (
-                  <p style={{ marginTop: '16px', color: '#8b949e' }}>
-                    You must be logged in to leave a review. <Link to="/login">Login now</Link>
-                  </p>
+                  !currentUser && (
+                    <p style={{ marginTop: '16px', color: '#8b949e' }}>
+                      You must be logged in to leave a review. <Link to="/login">Login now</Link>
+                    </p>
+                  )
                 )}
               </div>
 
