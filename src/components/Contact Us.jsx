@@ -81,50 +81,13 @@ const ContactUsForm = () => {
             <input
               type="text"
               name="name"
-              placeholder="Product name"
+              placeholder="name"
               value={productInfo.name}
               onChange={handleProductInfoChange}
             />
           </div>
 
-          <div className="form-group">
-            <textarea
-              name="description"
-              placeholder="Product description"
-              value={productInfo.description}
-              onChange={handleProductInfoChange}
-            />
-          </div>
-
-          <div className="form-group">
-            <input
-              type="number"
-              name="price"
-              placeholder="Product price"
-              value={productInfo.price}
-              onChange={handleProductInfoChange}
-            />
-          </div>
-
-          <div className="form-group">
-            <input
-              type="text"
-              name="name"
-              placeholder="Supplier name"
-              value={supplierInfo.name}
-              onChange={handleSupplierInfoChange}
-            />
-          </div>
-
-          <div className="form-group">
-            <input
-              type="text"
-              name="contact"
-              placeholder="Supplier contact"
-              value={supplierInfo.contact}
-              onChange={handleSupplierInfoChange}
-            />
-          </div>
+         
 
           <div className="form-group">
             <input

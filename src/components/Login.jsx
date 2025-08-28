@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { API_URL } from '../config.js';
 import { showToast } from './utils.js';
 
@@ -16,17 +16,13 @@ const Login = () => {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ username, password }),
       });
-
-      // Check if the response is OK and has the correct content type
       if (!res.ok) {
         throw new Error(`HTTP error! status: ${res.status}`);
       }
-
       const contentType = res.headers.get('content-type');
       if (!contentType || !contentType.includes('application/json')) {
         throw new Error("Response is not JSON");
       }
-
       const data = await res.json();
       if (res.ok) {
         localStorage.setItem('token', data.token);
@@ -65,6 +61,9 @@ const Login = () => {
               required
               autoComplete="current-password"
             />
+          </div>
+          <div className="forgot-password-link">
+            <Link to="/forgot-password">Forgot Password?</Link>
           </div>
           <button type="submit" className="btn btn-primary btn-block">Sign In</button>
         </form>

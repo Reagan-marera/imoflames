@@ -6,7 +6,6 @@ const Home = () => {
   return (
     <div className="container">
       <div className="search-bar-container" style={{ marginBottom: '2rem' }}>
-        <SearchBar />
       </div>
       <ProductList />
     </div>

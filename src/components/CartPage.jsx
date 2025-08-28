@@ -93,7 +93,7 @@ const CartPage = () => {
     return (
       <div className="container text-center mt-5">
         <h2>Your Cart is Empty</h2>
-        <Link to="/products" className="btn btn-primary mt-3">Browse Products</Link>
+        <Link to="/" className="btn btn-primary mt-3">Browse Products</Link>
       </div>
     );
   }

@@ -15,6 +15,7 @@ import './App.css';
 import './global.css';
 import UserManagement from './UserManagement';
 import ProductList from './ProductList';
+import ForgotPassword from './ForgotPassword';
 
 function App() {
   return (
@@ -32,6 +33,7 @@ function App() {
             <Route path="/payment" element={<PaymentForm />} />
             <Route path="/admin" element={<AdminDashboard />} />
             <Route path="/cart" element={<CartPage />} />
+            <Route path="/forgot-password" element={<ForgotPassword />} />
             <Route path="/user-management" element={<UserManagement />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
