@@ -1,18 +1,18 @@
 :root {
-  --primary-color: #00aaff;
-  --primary-hover: #0077cc;
-  --text-color: #e0e0e0;
-  --bg-color: #0d1117;
-  --nav-bg: rgba(13, 17, 23, 0.85);
-  --shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
-  --border-color: #21262d;
-  --text-light: #8b949e;
-  --mobile-menu-bg: #161b22;
-  --mobile-menu-text: #e0e0e0;
-  --dropdown-bg: #161b22;
-  --dropdown-text: #e0e0e0;
-  --dropdown-hover: #21262d;
-  --accent-green: #238636;
+  --primary-color: #0077cc;
+  --primary-hover: #005fa3;
+  --text-color: #333;
+  --bg-color: #f0f2f5;
+  --nav-bg: rgba(240, 242, 245, 0.85);
+  --shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  --border-color: #d0d7de;
+  --text-light: #57606a;
+  --mobile-menu-bg: #fff;
+  --mobile-menu-text: #333;
+  --dropdown-bg: #fff;
+  --dropdown-text: #333;
+  --dropdown-hover: #f6f8fa;
+  --accent-green: #2da44e;
 }
 
 .dark-mode {

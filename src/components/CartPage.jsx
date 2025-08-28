@@ -136,13 +136,14 @@ const CartPage = () => {
 
   const cartSummaryStyle = {
     flex: 1,
-    padding: '1.5rem',
+    padding: isMobile ? '1rem' : '1.5rem',
     backgroundColor: '#161b22',
     border: '1px solid #21262d',
     borderRadius: '8px',
     position: isMobile ? 'static' : 'sticky',
     top: '100px',
     height: 'fit-content',
+    width: isMobile ? '100%' : 'auto',
   };
 
   return (
