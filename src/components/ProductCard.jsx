@@ -1,5 +1,7 @@
 import React from 'react';
 import { API_URL } from '../config';
+import StarRating from './StarRating';
+import reviews from '../data/reviews.json';
 
 const ProductCard = ({
   product,
@@ -12,6 +14,11 @@ const ProductCard = ({
   isMobile,
   jumiaStyle = true,
 }) => {
+  const productReviews = reviews.filter(review => review.productId === product.id);
+  const averageRating = productReviews.length > 0
+    ? productReviews.reduce((acc, review) => acc + review.rating, 0) / productReviews.length
+    : 0;
+
   return (
     <div
       className="product-card"
@@ -21,13 +28,14 @@ const ProductCard = ({
         flexDirection: 'column',
         height: '100%',
         width: '100%',
-        backgroundColor: '#fff',
+        backgroundColor: '#161b22',
         borderRadius: '8px',
         overflow: 'hidden',
         cursor: 'pointer',
-        boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
-        border: '1px solid #e0e0e0',
+        boxShadow: '0 1px 3px rgba(0,0,0,0.4)',
+        border: '1px solid #21262d',
         position: 'relative',
+        color: '#e0e0e0'
       }}
     >
       {/* Product Image */}
@@ -38,7 +46,7 @@ const ProductCard = ({
           justifyContent: 'center',
           alignItems: 'center',
           padding: '10px',
-          backgroundColor: '#f9f9f9',
+          backgroundColor: '#0d1117',
           minHeight: isMobile ? '120px' : '150px',
         }}
       >
@@ -57,8 +65,8 @@ const ProductCard = ({
       <div
         style={{
           padding: isMobile ? '8px' : '12px',
-          backgroundColor: '#fff',
-          borderTop: '1px solid #f0f0f0',
+          backgroundColor: '#161b22',
+          borderTop: '1px solid #21262d',
         }}
       >
         {/* Product Name */}
@@ -67,7 +75,7 @@ const ProductCard = ({
             margin: '0 0 5px 0',
             fontSize: isMobile ? '14px' : '16px',
             fontWeight: '500',
-            color: '#333',
+            color: '#e0e0e0',
             whiteSpace: 'normal',
             overflow: 'hidden',
             textOverflow: 'ellipsis',
@@ -79,13 +87,18 @@ const ProductCard = ({
           {product.name}
         </h3>
 
+        {/* Star Rating */}
+        <div style={{ marginBottom: '5px' }}>
+          <StarRating rating={averageRating} />
+        </div>
+
         {/* Product Price (Always Visible) */}
         <p
           style={{
             margin: '0 0 5px 0',
             fontSize: isMobile ? '16px' : '18px',
             fontWeight: 'bold',
-            color: jumiaStyle ? '#ff9f00' : '#333',
+            color: jumiaStyle ? '#00aaff' : '#e0e0e0',
           }}
         >
           KES {product.price.toLocaleString()}
@@ -96,7 +109,7 @@ const ProductCard = ({
           style={{
             margin: '0',
             fontSize: isMobile ? '12px' : '14px',
-            color: '#666',
+            color: '#8b949e',
             whiteSpace: 'normal',
             overflow: 'hidden',
             textOverflow: 'ellipsis',

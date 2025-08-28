@@ -7,6 +7,8 @@ import ProductCard from './ProductCard';
 import SearchBar from './SearchBar';
 import { useMediaQuery } from 'react-responsive';
 import { motion, AnimatePresence } from 'framer-motion';
+import reviewsData from '../data/reviews.json';
+import StarRating from './StarRating';
 
 const ProductList = ({ selectedCategory }) => {
   // State
@@ -30,6 +32,7 @@ const ProductList = ({ selectedCategory }) => {
   const [totalProducts, setTotalProducts] = useState(0);
   const [error, setError] = useState(null);
   const [currentUser, setCurrentUser] = useState(null);
+  const [reviews, setReviews] = useState(reviewsData);
 
   // Hooks
   const location = useLocation();
@@ -1043,6 +1046,47 @@ const ProductList = ({ selectedCategory }) => {
                 <p style={{ color: '#666', margin: 0 }}>
                   {selectedProduct.description}
                 </p>
+              </div>
+
+              {/* Reviews Section */}
+              <div style={{ marginTop: '16px' }}>
+                <h4 style={{ marginBottom: '8px', color: '#333' }}>Reviews</h4>
+                <div style={{ maxHeight: '150px', overflowY: 'auto', border: '1px solid #eee', borderRadius: '4px', padding: '8px' }}>
+                  {reviews.filter(r => r.productId === selectedProduct.id).map((review, index) => (
+                    <div key={index} style={{ marginBottom: '8px', borderBottom: '1px solid #eee', paddingBottom: '8px' }}>
+                      <p style={{ fontWeight: 'bold', color: '#333' }}>{review.userName}</p>
+                      <StarRating rating={review.rating} />
+                      <p style={{ color: '#666', marginTop: '4px' }}>{review.comment}</p>
+                    </div>
+                  ))}
+                </div>
+                <form
+                  onSubmit={(e) => {
+                    e.preventDefault();
+                    const newReview = {
+                      productId: selectedProduct.id,
+                      userName: currentUser ? currentUser.username : 'Anonymous',
+                      rating: parseInt(e.target.rating.value),
+                      comment: e.target.comment.value,
+                    };
+                    setReviews([...reviews, newReview]);
+                    showToast('Thank you for your review!', 'success');
+                    e.target.reset();
+                  }}
+                  style={{ marginTop: '16px' }}
+                >
+                  <h5 style={{ marginBottom: '8px', color: '#333' }}>Leave a Review</h5>
+                  <select name="rating" required style={{ width: '100%', padding: '8px', marginBottom: '8px' }}>
+                    <option value="">Select Rating</option>
+                    <option value="1">1 Star</option>
+                    <option value="2">2 Stars</option>
+                    <option value="3">3 Stars</option>
+                    <option value="4">4 Stars</option>
+                    <option value="5">5 Stars</option>
+                  </select>
+                  <textarea name="comment" placeholder="Your review..." required style={{ width: '100%', padding: '8px', marginBottom: '8px', minHeight: '60px' }}></textarea>
+                  <button type="submit" style={{ width: '100%', padding: '8px' }}>Submit Review</button>
+                </form>
               </div>
               {/* Category */}
               <div

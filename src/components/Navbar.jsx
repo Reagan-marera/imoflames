@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import {
   FaHome, FaEnvelope, FaUpload, FaShoppingCart, FaSignInAlt, 
-  FaUserPlus, FaUserCircle, FaMoon, FaSun, FaBars, FaTimes, FaFire
+  FaUserPlus, FaUserCircle, FaMoon, FaSun, FaBars, FaTimes, FaCogs
 } from 'react-icons/fa';
 import { motion, AnimatePresence } from 'framer-motion';
 import './Navbar.css';
@@ -83,52 +83,12 @@ const Navbar = () => {
         >
           <div className="logo-title">
             <motion.div
-              animate={{ rotate: hoveringLogo ? 360 : 0 }}
-              transition={{ duration: 0.5 }}
+              animate={{ rotate: 360 }}
+              transition={{ duration: 8, repeat: Infinity, ease: 'linear' }}
             >
-              <FaFire className="logo-icon" />
+              <FaCogs className="logo-icon" />
             </motion.div>
-            <span className="logo-text">ImoFlames</span>
-            <div className="logo-flames">
-              <motion.div 
-                className="flame"
-                animate={{
-                  opacity: [0.8, 1, 0.8],
-                  height: ['8px', '12px', '8px']
-                }}
-                transition={{
-                  duration: 1.5,
-                  repeat: Infinity,
-                  repeatType: 'reverse'
-                }}
-              />
-              <motion.div 
-                className="flame"
-                animate={{
-                  opacity: [0.7, 1, 0.7],
-                  height: ['6px', '10px', '6px']
-                }}
-                transition={{
-                  duration: 1.2,
-                  repeat: Infinity,
-                  repeatType: 'reverse',
-                  delay: 0.3
-                }}
-              />
-              <motion.div 
-                className="flame"
-                animate={{
-                  opacity: [0.6, 0.9, 0.6],
-                  height: ['4px', '8px', '4px']
-                }}
-                transition={{
-                  duration: 1,
-                  repeat: Infinity,
-                  repeatType: 'reverse',
-                  delay: 0.6
-                }}
-              />
-            </div>
+            <span className="logo-text">Eng-Pro</span>
           </div>
         </motion.div>
 

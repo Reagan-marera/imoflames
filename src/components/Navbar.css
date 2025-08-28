@@ -1,33 +1,35 @@
 :root {
-  --primary-color: #ff6b00;
-  --primary-hover: #e05e00;
-  --text-color: #333;
-  --bg-color: #fff;
-  --nav-bg: rgba(255, 255, 255, 0.95);
-  --shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-  --border-color: #eee;
-  --text-light: #777;
-  --mobile-menu-bg: #fff;
-  --mobile-menu-text: #333;
-  --dropdown-bg: #fff;
-  --dropdown-text: #333;
-  --dropdown-hover: #f5f5f5;
+  --primary-color: #00aaff;
+  --primary-hover: #0077cc;
+  --text-color: #e0e0e0;
+  --bg-color: #0d1117;
+  --nav-bg: rgba(13, 17, 23, 0.85);
+  --shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+  --border-color: #21262d;
+  --text-light: #8b949e;
+  --mobile-menu-bg: #161b22;
+  --mobile-menu-text: #e0e0e0;
+  --dropdown-bg: #161b22;
+  --dropdown-text: #e0e0e0;
+  --dropdown-hover: #21262d;
+  --accent-green: #238636;
 }
 
 .dark-mode {
-  --primary-color: #ff9f00;
-  --primary-hover: #ffb733;
-  --text-color: #f0f0f0;
-  --bg-color: #121212;
-  --nav-bg: rgba(18, 18, 18, 0.95);
-  --shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
-  --border-color: #333;
-  --text-light: #aaa;
-  --mobile-menu-bg: #1e1e1e;
-  --mobile-menu-text: #f0f0f0;
-  --dropdown-bg: #2d2d2d;
-  --dropdown-text: #f0f0f0;
-  --dropdown-hover: #3d3d3d;
+  --primary-color: #00aaff;
+  --primary-hover: #0077cc;
+  --text-color: #e0e0e0;
+  --bg-color: #0d1117;
+  --nav-bg: rgba(13, 17, 23, 0.85);
+  --shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+  --border-color: #21262d;
+  --text-light: #8b949e;
+  --mobile-menu-bg: #161b22;
+  --mobile-menu-text: #e0e0e0;
+  --dropdown-bg: #161b22;
+  --dropdown-text: #e0e0e0;
+  --dropdown-hover: #21262d;
+  --accent-green: #238636;
 }
 
 body {
