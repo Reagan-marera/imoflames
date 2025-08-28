@@ -1,7 +1,7 @@
 
 import React, { useEffect, useState } from 'react';
 import { API_URL } from '../config';
-import { useLocation, useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate, Link } from 'react-router-dom';
 import { showToast } from './utils';
 import ProductCard from './ProductCard';
 import SearchBar from './SearchBar';
@@ -46,11 +46,11 @@ const ProductList = ({ selectedCategory }) => {
 
   // Categories
   const categories = [
-    { name: 'All', color: '#ff9f00' },
-    { name: 'Phones', color: '#f68b1e' },
+    { name: 'All', color: '#00aaff' },
+    { name: 'Phones', color: '#00aaff' },
     { name: 'TVs', color: '#8a8a8a' },
     { name: 'Laptops', color: '#2ba8db' },
-    { name: 'Appliances', color: '#f26522' },
+    { name: 'Appliances', color: '#00aaff' },
     { name: 'Gaming', color: '#8a2be2' },
     { name: 'Accessories', color: '#4CAF50' },
   ];
@@ -229,6 +229,7 @@ const ProductList = ({ selectedCategory }) => {
         headers: { Authorization: `Bearer ${token}` },
       });
       if (res.ok) {
+        closeProductDetails();
         showToast('Successfully added to cart', 'success');
         window.dispatchEvent(new Event('cartUpdated'));
       } else {
@@ -383,8 +384,8 @@ const ProductList = ({ selectedCategory }) => {
           style={{
             width: '80px',
             height: '80px',
-            border: '8px solid #f3f3f3',
-            borderTop: '8px solid #ff9f00',
+            border: '8px solid #21262d',
+            borderTop: '8px solid #00aaff',
             borderRadius: '50%',
           }}
         />
@@ -403,16 +404,16 @@ const ProductList = ({ selectedCategory }) => {
           height: '100vh',
           padding: '20px',
           textAlign: 'center',
-          backgroundColor: '#f5f5f5',
+          backgroundColor: '#0d1117',
         }}
       >
-        <h3 style={{ color: '#d32f2f', marginBottom: '20px' }}>Error Loading Products</h3>
-        <p style={{ color: '#666', marginBottom: '20px' }}>{error}</p>
+        <h3 style={{ color: '#d73a49', marginBottom: '20px' }}>Error Loading Products</h3>
+        <p style={{ color: '#8b949e', marginBottom: '20px' }}>{error}</p>
         <button
           onClick={() => window.location.reload()}
           style={{
             padding: '10px 20px',
-            backgroundColor: '#ff9f00',
+            backgroundColor: '#00aaff',
             color: '#fff',
             border: 'none',
             borderRadius: '4px',
@@ -566,8 +567,8 @@ const ProductList = ({ selectedCategory }) => {
         transition={{ duration: 0.5 }}
         style={{
           padding: isMobile ? '15px' : '20px 60px',
-          backgroundColor: '#ff9f00',
-          boxShadow: '0 2px 10px rgba(0,0,0,0.1)',
+          backgroundColor: '#161b22',
+          boxShadow: '0 2px 10px rgba(0,0,0,0.4)',
         }}
       >
         <SearchBar onSearch={handleSearch} />
@@ -740,8 +741,8 @@ const ProductList = ({ selectedCategory }) => {
             whileTap={{ scale: 0.95 }}
             style={{
               padding: '8px 12px',
-              backgroundColor: currentPage === 1 ? '#e0e0e0' : '#ff9f00',
-              color: currentPage === 1 ? '#666' : '#fff',
+              backgroundColor: currentPage === 1 ? '#21262d' : '#00aaff',
+              color: currentPage === 1 ? '#8b949e' : '#fff',
               border: 'none',
               borderRadius: '4px',
               fontSize: '14px',
@@ -758,8 +759,8 @@ const ProductList = ({ selectedCategory }) => {
             whileTap={{ scale: 0.95 }}
             style={{
               padding: '8px 12px',
-              backgroundColor: currentPage === 1 ? '#e0e0e0' : '#ff9f00',
-              color: currentPage === 1 ? '#666' : '#fff',
+              backgroundColor: currentPage === 1 ? '#21262d' : '#00aaff',
+              color: currentPage === 1 ? '#8b949e' : '#fff',
               border: 'none',
               borderRadius: '4px',
               fontSize: '14px',
@@ -783,7 +784,7 @@ const ProductList = ({ selectedCategory }) => {
                 whileTap={{ scale: 0.95 }}
                 style={{
                   padding: '8px 12px',
-                  backgroundColor: currentPage === pageNum ? '#f68b1e' : '#ff9f00',
+                  backgroundColor: currentPage === pageNum ? '#0077cc' : '#00aaff',
                   color: '#fff',
                   border: 'none',
                   borderRadius: '4px',
@@ -803,8 +804,8 @@ const ProductList = ({ selectedCategory }) => {
             whileTap={{ scale: 0.95 }}
             style={{
               padding: '8px 12px',
-              backgroundColor: currentPage === totalPages ? '#e0e0e0' : '#ff9f00',
-              color: currentPage === totalPages ? '#666' : '#fff',
+              backgroundColor: currentPage === totalPages ? '#21262d' : '#00aaff',
+              color: currentPage === totalPages ? '#8b949e' : '#fff',
               border: 'none',
               borderRadius: '4px',
               fontSize: '14px',
@@ -821,8 +822,8 @@ const ProductList = ({ selectedCategory }) => {
             whileTap={{ scale: 0.95 }}
             style={{
               padding: '8px 12px',
-              backgroundColor: currentPage === totalPages ? '#e0e0e0' : '#ff9f00',
-              color: currentPage === totalPages ? '#666' : '#fff',
+              backgroundColor: currentPage === totalPages ? '#21262d' : '#00aaff',
+              color: currentPage === totalPages ? '#8b949e' : '#fff',
               border: 'none',
               borderRadius: '4px',
               fontSize: '14px',
@@ -848,13 +849,13 @@ const ProductList = ({ selectedCategory }) => {
             alignItems: 'center',
             justifyContent: 'center',
             height: '50vh',
-            color: '#333',
+            color: '#e0e0e0',
             textAlign: 'center',
             padding: '0 20px',
-            backgroundColor: '#fff',
+            backgroundColor: '#161b22',
             margin: '15px',
             borderRadius: '4px',
-            boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
+            boxShadow: '0 1px 3px rgba(0,0,0,0.4)',
           }}
         >
           <motion.img
@@ -864,8 +865,8 @@ const ProductList = ({ selectedCategory }) => {
             animate={{ y: [0, -10, 0], scale: [1, 1.05, 1] }}
             transition={{ duration: 2, repeat: Infinity }}
           />
-          <h3 style={{ marginTop: '20px', fontSize: '20px', color: '#333' }}>No products found</h3>
-          <p style={{ fontSize: '14px', color: '#666', maxWidth: '500px', marginTop: '10px' }}>
+          <h3 style={{ marginTop: '20px', fontSize: '20px', color: '#e0e0e0' }}>No products found</h3>
+          <p style={{ fontSize: '14px', color: '#8b949e', maxWidth: '500px', marginTop: '10px' }}>
             {`We couldn't find any products matching your ${searchQuery ? 'search' : 'category'} criteria. Try adjusting your filters.`}
           </p>
           <motion.button
@@ -878,14 +879,14 @@ const ProductList = ({ selectedCategory }) => {
             style={{
               marginTop: '20px',
               padding: '10px 20px',
-              backgroundColor: '#ff9f00',
+              backgroundColor: '#00aaff',
               color: '#fff',
               border: 'none',
               borderRadius: '4px',
               fontSize: '14px',
               fontWeight: 'bold',
               cursor: 'pointer',
-              boxShadow: '0 2px 5px rgba(0,0,0,0.1)',
+              boxShadow: '0 2px 5px rgba(0,0,0,0.4)',
             }}
             >
             Reset Filters
@@ -923,9 +924,9 @@ const ProductList = ({ selectedCategory }) => {
                 backgroundColor: '#161b22',
                 borderRadius: '10px',
                 width: '100%',
-                maxWidth: isMobile ? '95vw' : '800px',
-                maxHeight: isMobile ? '95vh' : '90vh',
-                padding: isMobile ? '15px' : '30px',
+                maxWidth: isMobile ? '90vw' : '800px',
+                maxHeight: isMobile ? '90vh' : '90vh',
+                padding: isMobile ? '1rem' : '2rem',
                 position: 'relative',
                 overflowY: 'auto',
                 color: '#e0e0e0',
@@ -942,7 +943,7 @@ const ProductList = ({ selectedCategory }) => {
                   position: 'sticky',
                   top: '5px',
                   right: '5px',
-                  background: '#ff9f00',
+                  background: '#00aaff',
                   border: 'none',
                   fontSize: '16px',
                   cursor: 'pointer',
@@ -968,9 +969,9 @@ const ProductList = ({ selectedCategory }) => {
                   justifyContent: 'center',
                   alignItems: 'center',
                   marginBottom: '8px',
-                  backgroundColor: '#f9f9f9',
+                  backgroundColor: '#0d1117',
                   borderRadius: '4px',
-                  border: '1px solid #eee',
+                  border: '1px solid #21262d',
                 }}
               >
                 <img
@@ -1001,7 +1002,7 @@ const ProductList = ({ selectedCategory }) => {
                     style={{
                       minWidth: '45px',
                       height: '45px',
-                      border: currentImageIndex === index ? '1.5px solid #ff9f00' : '1px solid #ddd',
+                      border: currentImageIndex === index ? '1.5px solid #00aaff' : '1px solid #21262d',
                       borderRadius: '3px',
                       overflow: 'hidden',
                       cursor: 'pointer',
@@ -1137,7 +1138,7 @@ const ProductList = ({ selectedCategory }) => {
                   style={{
                     flex: 1,
                     padding: '7px',
-                    backgroundColor: '#ff9f00',
+                    backgroundColor: '#00aaff',
                     color: '#fff',
                     border: 'none',
                     borderRadius: '4px',
@@ -1169,14 +1170,14 @@ const ProductList = ({ selectedCategory }) => {
               {currentUser && (currentUser.is_admin || selectedProduct.user_id === currentUser.id) && (
                 <div
                   style={{
-                    backgroundColor: '#f9f9f9',
+                    backgroundColor: '#0d1117',
                     padding: '8px',
                     borderRadius: '4px',
-                    borderLeft: '3px solid #ff9f00',
+                    borderLeft: '3px solid #00aaff',
                     fontSize: '12px',
                   }}
                 >
-                  <p style={{ color: '#333', fontWeight: '500', margin: '0 0 6px 0' }}>
+                  <p style={{ color: '#e0e0e0', fontWeight: '500', margin: '0 0 6px 0' }}>
                     Admin Actions
                   </p>
                   <div style={{ display: 'flex', gap: '6px' }}>
@@ -1200,7 +1201,7 @@ const ProductList = ({ selectedCategory }) => {
                       style={{
                         flex: 1,
                         padding: '5px',
-                        backgroundColor: '#f26522',
+                        backgroundColor: '#d73a49',
                         color: '#fff',
                         border: 'none',
                         borderRadius: '3px',
@@ -1517,7 +1518,7 @@ const ProductList = ({ selectedCategory }) => {
           transform: 'translateX(-50%)',
           zIndex: 999,
           padding: '12px 24px',
-          backgroundColor: '#ff9f00',
+          backgroundColor: '#00aaff',
           color: '#fff',
           border: 'none',
           borderRadius: '25px',

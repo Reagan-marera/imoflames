@@ -1,24 +1,32 @@
 :root {
+  --primary-color: #0077cc;
+  --primary-hover: #005fa3;
+  --text-color: #333;
+  --bg-color: #f0f2f5;
+  --card-bg: #fff;
+  --shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  --border-color: #d0d7de;
+  --text-light: #57606a;
+  --input-bg: #fff;
+}
+
+.dark-mode {
   --primary-color: #00aaff;
   --primary-hover: #0077cc;
   --text-color: #e0e0e0;
   --bg-color: #0d1117;
-  --nav-bg: rgba(13, 17, 23, 0.85);
+  --card-bg: #161b22;
   --shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
   --border-color: #21262d;
   --text-light: #8b949e;
-  --mobile-menu-bg: #161b22;
-  --mobile-menu-text: #e0e0e0;
-  --dropdown-bg: #161b22;
-  --dropdown-text: #e0e0e0;
-  --dropdown-hover: #21262d;
-  --accent-green: #238636;
+  --input-bg: #21262d;
 }
 
 body {
   background-color: var(--bg-color);
   color: var(--text-color);
   font-family: 'Roboto Mono', monospace;
+  transition: background-color 0.3s ease, color 0.3s ease;
 }
 
 .container {
@@ -63,15 +71,15 @@ select {
   margin: 0.5rem 0 1rem;
   border: 1px solid var(--border-color);
   border-radius: 4px;
-  background-color: #161b22;
+  background-color: var(--input-bg);
   color: var(--text-color);
 }
 
 form {
-  background: #161b22;
+  background: var(--card-bg);
   padding: 1.5rem;
   border-radius: 8px;
   max-width: 400px;
   margin: 2rem auto;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.4);
+  box-shadow: var(--shadow);
 }
