@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from 'react';
 import { API_URL } from '../config';
 import { useLocation, useNavigate, Link } from 'react-router-dom';
@@ -54,6 +53,7 @@ const ProductList = ({ selectedCategory }) => {
     { name: 'Gaming', color: '#8a2be2' },
     { name: 'Accessories', color: '#4CAF50' },
   ];
+
   const [filterCategory, setFilterCategory] = useState('All');
   const productsPerPage = isMobile ? 12 : isTablet ? 16 : 20;
 
@@ -91,16 +91,16 @@ const ProductList = ({ selectedCategory }) => {
         if (selectedCategory) queryParams.set('category', selectedCategory);
         if (searchQuery) queryParams.set('search', searchQuery);
         if (filterCategory !== 'All') queryParams.set('category', filterCategory);
-        
+
         const headers = {};
         if (token) headers.Authorization = `Bearer ${token}`;
-        
+
         const res = await fetch(`${API_URL}/api/products?${queryParams.toString()}`, { headers });
         if (!res.ok) {
           const errorText = await res.text();
           throw new Error(`Failed to fetch products: ${res.status} ${errorText}`);
         }
-        
+
         const data = await res.json();
         setProducts(data.products || []);
         setTotalPages(data.totalPages || 1);
@@ -134,13 +134,44 @@ const ProductList = ({ selectedCategory }) => {
         if (!product) return false;
         const categoryMatch = filterCategory === 'All' || product.category === filterCategory;
         if (!searchQuery) return categoryMatch;
+
         const searchLower = searchQuery.toLowerCase();
-        return (
-          categoryMatch &&
-          ((product.name && product.name.toLowerCase().includes(searchLower)) ||
-            (product.description && product.description.toLowerCase().includes(searchLower)) ||
-            (product.category && product.category.toLowerCase().includes(searchLower)))
-        );
+
+        // Handle price range queries (e.g., "500-1000")
+        const priceRangeMatch = searchQuery.match(/^(\d+)-(\d+)$/);
+        if (priceRangeMatch) {
+          const [min, max] = priceRangeMatch.slice(1).map(Number);
+          return categoryMatch && product.price >= min && product.price <= max;
+        }
+
+        // Flatten all relevant fields for search
+        const productValues = [
+          product.name?.toLowerCase(),
+          product.description?.toLowerCase(),
+          product.category?.toLowerCase(),
+          product.price?.toString().toLowerCase(),
+          product.user_id?.toString().toLowerCase(),
+          ...(product.extra_images || []).map(img => img.toLowerCase()),
+          ...(reviews
+            .filter(r => r.productId === product.id)
+            .map(r => [
+              r.userName?.toLowerCase(),
+              r.comment?.toLowerCase(),
+              r.rating?.toString().toLowerCase(),
+            ])
+            .flat()),
+        ];
+
+        // Check for exact matches (e.g., user_id or category)
+        const exactMatches = [
+          product.user_id?.toString() === searchQuery,
+          product.category?.toLowerCase() === searchLower,
+        ];
+
+        // Check for partial matches in any field
+        const partialMatches = productValues.some(value => value?.includes(searchLower));
+
+        return categoryMatch && (exactMatches.some(Boolean) || partialMatches);
       });
     } catch (err) {
       console.error('Error filtering products:', err);
@@ -292,8 +323,8 @@ const ProductList = ({ selectedCategory }) => {
       previews.push(`${API_URL}/api/uploads/${product.image_path}`);
     }
     if (product.extra_images) {
-      const extraImages = Array.isArray(product.extra_images) 
-        ? product.extra_images 
+      const extraImages = Array.isArray(product.extra_images)
+        ? product.extra_images
         : product.extra_images.split(',');
       previews.push(...extraImages.map((img) => `${API_URL}/api/uploads/${img}`));
     }
@@ -313,17 +344,17 @@ const ProductList = ({ selectedCategory }) => {
       formData.append('description', editFormData.description);
       formData.append('price', editFormData.price);
       formData.append('category', editFormData.category);
-      
+
       editImages.forEach((file) => {
         formData.append('images', file);
       });
-      
+
       const res = await fetch(`${API_URL}/api/products/${editingProduct.id}`, {
         method: 'PUT',
         headers: { Authorization: `Bearer ${token}` },
         body: formData,
       });
-      
+
       if (res.ok) {
         const updatedProduct = await res.json();
         setProducts(products.map((p) => (p.id === updatedProduct.id ? updatedProduct : p)));
@@ -888,7 +919,7 @@ const ProductList = ({ selectedCategory }) => {
               cursor: 'pointer',
               boxShadow: '0 2px 5px rgba(0,0,0,0.4)',
             }}
-            >
+          >
             Reset Filters
           </motion.button>
         </motion.div>
@@ -960,6 +991,7 @@ const ProductList = ({ selectedCategory }) => {
               >
                 ×
               </motion.button>
+
               {/* Product Image */}
               <div
                 style={{
@@ -984,6 +1016,7 @@ const ProductList = ({ selectedCategory }) => {
                   }}
                 />
               </div>
+
               {/* Thumbnails */}
               <div
                 style={{
@@ -1017,6 +1050,7 @@ const ProductList = ({ selectedCategory }) => {
                   </div>
                 ))}
               </div>
+
               {/* Product Name */}
               <h3
                 style={{
@@ -1029,6 +1063,7 @@ const ProductList = ({ selectedCategory }) => {
               >
                 {selectedProduct.name}
               </h3>
+
               {/* Product Price */}
               <p
                 style={{
@@ -1041,6 +1076,7 @@ const ProductList = ({ selectedCategory }) => {
               >
                 KES {selectedProduct.price.toLocaleString()}
               </p>
+
               {/* Description */}
               <div
                 style={{
@@ -1115,6 +1151,7 @@ const ProductList = ({ selectedCategory }) => {
                   </p>
                 )}
               </div>
+
               {/* Category */}
               <div
                 style={{
@@ -1131,6 +1168,7 @@ const ProductList = ({ selectedCategory }) => {
                   {selectedProduct.category || 'N/A'}
                 </p>
               </div>
+
               {/* Action Buttons */}
               <div style={{ display: 'flex', gap: '6px', marginBottom: '8px' }}>
                 <button
@@ -1166,6 +1204,7 @@ const ProductList = ({ selectedCategory }) => {
                   Add to Cart
                 </button>
               </div>
+
               {/* Admin Actions */}
               {currentUser && (currentUser.is_admin || selectedProduct.user_id === currentUser.id) && (
                 <div

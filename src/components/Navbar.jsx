@@ -120,7 +120,7 @@ const Navbar = () => {
             >
               <FaCogs className="logo-icon" />
             </motion.div>
-            <span className="logo-text">Eng-Pro</span>
+            <span className="logo-text">ImoFlames</span>
           </div>
         </motion.div>
 
