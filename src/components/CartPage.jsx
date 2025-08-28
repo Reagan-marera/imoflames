@@ -124,6 +124,8 @@ const CartPage = () => {
     border: '1px solid #21262d',
     borderRadius: '8px',
     marginBottom: '1rem',
+    flexDirection: isMobile ? 'column' : 'row',
+    textAlign: isMobile ? 'center' : 'left',
   };
 
   const cartItemImageStyle = {
@@ -161,7 +163,7 @@ const CartPage = () => {
               </div>
               <button
                 onClick={() => handleRemove(item.id)}
-                style={{ backgroundColor: '#d73a49' }}
+                style={{ backgroundColor: '#d73a49', width: isMobile ? '100%' : 'auto', marginTop: isMobile ? '1rem' : '0' }}
               >
                 Remove
               </button>

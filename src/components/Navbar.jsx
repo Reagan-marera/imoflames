@@ -6,6 +6,7 @@ import {
 } from 'react-icons/fa';
 import { motion, AnimatePresence } from 'framer-motion';
 import './Navbar.css';
+import { API_URL } from '../config';
 
 const Navbar = () => {
   const [darkMode, setDarkMode] = useState(() => {
@@ -55,7 +56,7 @@ const Navbar = () => {
         return;
       }
       try {
-        const res = await fetch('/api/cart', {
+        const res = await fetch(`${API_URL}/api/cart`, {
           headers: { Authorization: `Bearer ${token}` },
         });
         if (res.ok) {
