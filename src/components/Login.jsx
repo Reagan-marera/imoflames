@@ -16,25 +16,42 @@ const Login = () => {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ username, password }),
       });
-      if (!res.ok) {
-        throw new Error(`HTTP error! status: ${res.status}`);
-      }
+      
       const contentType = res.headers.get('content-type');
       if (!contentType || !contentType.includes('application/json')) {
-        throw new Error("Response is not JSON");
+        throw new Error("Server response format error");
       }
+      
       const data = await res.json();
+      
       if (res.ok) {
         localStorage.setItem('token', data.token);
         localStorage.setItem('user', JSON.stringify(data.user));
-        showToast("Login successful!", "success");
+        showToast("Login successful! Welcome back!", "success");
         navigate('/');
       } else {
-        showToast(data.message || 'Login failed', "error");
+        // Handle specific error codes with user-friendly messages
+        if (res.status === 401) {
+          showToast("Invalid username or password. Please try again.", "error");
+        } else if (res.status === 403) {
+          showToast("Account temporarily locked. Please contact support.", "error");
+        } else if (res.status === 404) {
+          showToast("User not found. Please check your credentials.", "error");
+        } else if (res.status === 429) {
+          showToast("Too many login attempts. Please try again later.", "error");
+        } else {
+          showToast(data.message || 'Login failed. Please try again.', "error");
+        }
       }
     } catch (err) {
-      console.error(err);
-      showToast("Error logging in", "error");
+      console.error('Login error:', err);
+      if (err.message.includes('NetworkError') || err.message.includes('Failed to fetch')) {
+        showToast("Network error. Please check your connection and try again.", "error");
+      } else if (err.message.includes('Server response format error')) {
+        showToast("Server error. Please try again later.", "error");
+      } else {
+        showToast("An unexpected error occurred. Please try again.", "error");
+      }
     }
   };
 
