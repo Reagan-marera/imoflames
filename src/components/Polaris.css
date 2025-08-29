@@ -1,0 +1,48 @@
+@import '@shopify/polaris-tokens/css/styles.css';
+
+/* Animations */
+
+/* Card hover effect */
+.card {
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.card:hover {
+  transform: translateY(-4px);
+  box-shadow: var(--p-shadow-xl);
+}
+
+/* Button hover effect */
+.btn {
+  transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+}
+
+.btn:hover {
+  transform: scale(1.03);
+  box-shadow: var(--p-shadow-md);
+}
+
+/* Nav link underline animation */
+.nav-link .nav-underline {
+  transition: transform 0.3s ease-in-out;
+  transform: scaleX(0);
+}
+
+.nav-link:hover .nav-underline,
+.nav-link.active .nav-underline {
+  transform: scaleX(1);
+}
+
+/* Page content fade-in animation */
+.container {
+  animation: fadeIn 0.5s ease-in-out;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}

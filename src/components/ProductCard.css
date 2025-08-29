@@ -1,0 +1,104 @@
+.product-card {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  width: 100%;
+  background-color: var(--p-color-bg-surface);
+  border-radius: var(--p-border-radius-3);
+  overflow: hidden;
+  cursor: pointer;
+  box-shadow: var(--p-shadow-sm);
+  border: 1px solid var(--p-color-border);
+  position: relative;
+  color: var(--p-color-text);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.product-card:hover {
+  transform: translateY(-4px);
+  box-shadow: var(--p-shadow-xl);
+}
+
+.product-card-image-container {
+  flex: 1;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: var(--p-space-4);
+  background-color: var(--p-color-bg-surface-hover);
+  min-height: 150px;
+}
+
+.product-card-image {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+}
+
+.product-card-details {
+  padding: var(--p-space-4);
+  background-color: var(--p-color-bg-surface);
+  border-top: 1px solid var(--p-color-border);
+}
+
+.product-card-title {
+  margin: 0 0 var(--p-space-2) 0;
+  font-size: var(--p-font-size-300);
+  font-weight: var(--p-font-weight-semibold);
+  color: var(--p-color-text);
+  white-space: normal;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+}
+
+.product-card-rating {
+  margin-bottom: var(--p-space-2);
+}
+
+.product-card-price {
+  margin: 0 0 var(--p-space-2) 0;
+  font-size: var(--p-font-size-400);
+  font-weight: var(--p-font-weight-bold);
+  color: var(--p-color-text-emphasis);
+}
+
+.product-card-description {
+  margin: 0;
+  font-size: var(--p-font-size-200);
+  color: var(--p-color-text-subdued);
+  white-space: normal;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+}
+
+.product-card-admin-actions {
+  position: absolute;
+  top: var(--p-space-2);
+  right: var(--p-space-2);
+  display: flex;
+  gap: var(--p-space-2);
+}
+
+.product-card-admin-actions button {
+  background-color: rgba(0, 0, 0, 0.5);
+  color: white;
+  border: none;
+  border-radius: 50%;
+  width: 32px;
+  height: 32px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background-color 0.2s ease;
+}
+
+.product-card-admin-actions button:hover {
+  background-color: rgba(0, 0, 0, 0.8);
+}
