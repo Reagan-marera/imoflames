@@ -582,21 +582,6 @@ const ProductList = ({ reviews, setReviews, selectedCategory }) => {
   const filteredProducts = getFilteredProducts();
   const cardSize = getProductCardSize();
 
-  const container = {
-    hidden: { opacity: 0 },
-    show: {
-      opacity: 1,
-      transition: {
-        staggerChildren: 0.1,
-      },
-    },
-  };
-
-  const card = {
-    hidden: { y: 20, opacity: 0 },
-    show: { y: 0, opacity: 1 },
-  };
-
   return (
     <div
       className="product-list-page"
@@ -735,14 +720,14 @@ const ProductList = ({ reviews, setReviews, selectedCategory }) => {
       {/* Product Grid */}
       <motion.div
         className="product-grid"
-        variants={container}
-        initial="hidden"
-        animate="show"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: 0.3 }}
         style={{
           display: 'grid',
-          gridTemplateColumns: isMobile ? 'repeat(2, 1fr)' : 'repeat(auto-fill, minmax(220px, 1fr))',
-          gap: isMobile ? '10px' : '15px',
-          padding: isMobile ? '10px' : '15px',
+          gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))',
+          gap: '2rem',
+          padding: '2rem 0',
           position: 'relative',
           minWidth: '0',
           width: '100%',
@@ -753,7 +738,19 @@ const ProductList = ({ reviews, setReviews, selectedCategory }) => {
           <motion.div
             key={product?.id || index}
             className="product-card-wrapper"
-            variants={card}
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: index * 0.05, duration: 0.2 }}
+            whileHover={{ y: -5, boxShadow: '0 5px 15px rgba(0,0,0,0.1)', transition: { duration: 0.2 } }}
+            style={{
+              borderRadius: '8px',
+              overflow: 'hidden',
+              backgroundColor: '#fff',
+              boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
+              border: '1px solid #e0e0e0',
+              cursor: 'pointer',
+              minWidth: '0',
+            }}
           >
             {product && (
               <ProductCard

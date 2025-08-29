@@ -13,7 +13,6 @@ import CartPage from './CartPage';
 import ContactUsForm from './Contact Us';
 import './App.css';
 import './global.css';
-import './Polaris.css';
 import UserManagement from './UserManagement';
 import ProductList from './ProductList';
 import ForgotPassword from './ForgotPassword';
