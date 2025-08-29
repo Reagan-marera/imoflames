@@ -1,6 +1,5 @@
 import React from 'react';
 import { API_URL } from '../config';
-import StarRating from './StarRating';
 import './ProductCard.css';
 
 const ProductCard = ({
@@ -31,9 +30,6 @@ const ProductCard = ({
 
       <div className="product-card-details">
         <h3 className="product-card-title">{product.name}</h3>
-        <div className="product-card-rating">
-          <StarRating rating={averageRating} />
-        </div>
         <p className="product-card-price">KES {product.price.toLocaleString()}</p>
         <p className="product-card-description">
           {product.description.substring(0, 50)}...

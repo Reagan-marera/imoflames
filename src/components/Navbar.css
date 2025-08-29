@@ -65,6 +65,7 @@
 
 .nav-link:hover {
   background-color: var(--p-color-bg-secondary-hover);
+  transform: translateY(-2px);
 }
 
 .nav-link.active {
