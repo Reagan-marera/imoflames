@@ -15,8 +15,12 @@
 }
 
 .product-card:hover {
-  transform: translateY(-4px);
+  transform: translateY(-8px);
   box-shadow: var(--p-shadow-xl);
+}
+
+.product-card:hover .product-card-image {
+  transform: scale(1.05);
 }
 
 .product-card-image-container {

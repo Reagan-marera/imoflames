@@ -6,7 +6,6 @@ import ProductCard from './ProductCard';
 import SearchBar from './SearchBar';
 import { useMediaQuery } from 'react-responsive';
 import { motion, AnimatePresence } from 'framer-motion';
-import StarRating from './StarRating';
 
 const ProductList = ({ reviews, setReviews, selectedCategory }) => {
   // State
@@ -583,6 +582,21 @@ const ProductList = ({ reviews, setReviews, selectedCategory }) => {
   const filteredProducts = getFilteredProducts();
   const cardSize = getProductCardSize();
 
+  const container = {
+    hidden: { opacity: 0 },
+    show: {
+      opacity: 1,
+      transition: {
+        staggerChildren: 0.1,
+      },
+    },
+  };
+
+  const card = {
+    hidden: { y: 20, opacity: 0 },
+    show: { y: 0, opacity: 1 },
+  };
+
   return (
     <div
       className="product-list-page"
@@ -721,9 +735,9 @@ const ProductList = ({ reviews, setReviews, selectedCategory }) => {
       {/* Product Grid */}
       <motion.div
         className="product-grid"
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ duration: 0.3 }}
+        variants={container}
+        initial="hidden"
+        animate="show"
         style={{
           display: 'grid',
           gridTemplateColumns: isMobile ? 'repeat(2, 1fr)' : 'repeat(auto-fill, minmax(220px, 1fr))',
@@ -739,21 +753,7 @@ const ProductList = ({ reviews, setReviews, selectedCategory }) => {
           <motion.div
             key={product?.id || index}
             className="product-card-wrapper"
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: index * 0.05, duration: 0.2 }}
-            whileHover={{ y: -5, boxShadow: '0 5px 15px rgba(0,0,0,0.1)', transition: { duration: 0.2 } }}
-            style={{
-              borderRadius: '8px',
-              overflow: 'hidden',
-              backgroundColor: '#fff',
-              boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
-              border: '1px solid #e0e0e0',
-              cursor: 'pointer',
-              minWidth: '0',
-              width: cardSize.width,
-              height: cardSize.height,
-            }}
+            variants={card}
           >
             {product && (
               <ProductCard
@@ -1116,40 +1116,6 @@ const ProductList = ({ reviews, setReviews, selectedCategory }) => {
                 </p>
               </div>
 
-              {/* New Rating Section */}
-              <div style={{ marginTop: '16px', borderTop: '1px solid #21262d', paddingTop: '16px' }}>
-                <h4 style={{ marginBottom: '8px', color: '#e0e0e0', fontSize: '20px', textAlign: 'center' }}>
-                  {currentUser ? 'Rate this Product' : 'Log in to Rate'}
-                </h4>
-                {currentUser ? (
-                  <div style={{ display: 'flex', justifyContent: 'center' }}>
-                    <StarRating
-                      size={32}
-                      rating={
-                        reviews.find(r => r.productId === selectedProduct.id && r.userName === currentUser.username)?.rating || 0
-                      }
-                      onRatingChange={handleRatingChange}
-                    />
-                  </div>
-                ) : (
-                   <p style={{ textAlign: 'center', color: '#8b949e' }}>
-                     <Link to="/login">Login</Link> to share your opinion.
-                   </p>
-                )}
-                <div style={{textAlign: 'center', marginTop: '10px', color: '#8b949e'}}>
-                  <p>Average rating:</p>
-                  <StarRating
-                      rating={
-                          (() => {
-                              const productReviews = reviews.filter(r => r.productId === selectedProduct.id);
-                              if (productReviews.length === 0) return 0;
-                              const avg = productReviews.reduce((acc, r) => acc + r.rating, 0) / productReviews.length;
-                              return avg;
-                          })()
-                      }
-                  />
-                </div>
-              </div>
 
               {/* Category */}
               <div

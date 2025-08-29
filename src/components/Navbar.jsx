@@ -121,55 +121,30 @@ const Navbar = () => {
               transition={{ duration: 0.5 }}
             >
               <motion.svg
-                width="30"
+                width="40"
                 height="40"
-                viewBox="0 0 30 40"
+                viewBox="0 0 24 24"
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
               >
-                {/* Blue flammable flame shape */}
+                <defs>
+                  <linearGradient id="flameGradient" x1="50%" y1="0%" x2="50%" y2="100%">
+                    <stop offset="0%" stopColor="#FFD700" />
+                    <stop offset="100%" stopColor="#FF4500" />
+                  </linearGradient>
+                </defs>
                 <motion.path
-                  d="M15 0C6.7 0 0 6.7 0 15c0 5.6 3.1 10.6 7.9 13.4l-1.4 4.2c-0.5 1.5 0.1 3.2 1.5 4.2L15 40l6.1-7.4c1.4-1 2-2.7 1.5-4.2l-1.4-4.2C26.9 25.6 30 20.6 30 15c0-8.3-6.7-15-15-15z"
-                  fill="#0099ff"
+                  d="M12 2C12 2 5 9.5 5 14.5C5 19.5 8.5 22 12 22S19 19.5 19 14.5C19 9.5 12 2 12 2Z"
+                  fill="url(#flameGradient)"
                   animate={{
-                    pathLength: [0.7, 1],
-                    fill: ["#0099ff", "#00ccff", "#0099ff"],
+                    scale: [1, 1.1, 1],
+                    rotate: [0, 5, -5, 0],
                   }}
                   transition={{
-                    duration: 1.2,
-                    repeat: Infinity,
-                    repeatType: "reverse",
-                    ease: "easeInOut"
-                  }}
-                />
-                <motion.path
-                  d="M15 8C9.5 8 5 12.5 5 18c0 3.3 1.8 6.2 4.6 8.1l-0.8 2.4c-0.3 0.9 0.1 1.8 0.9 2.4L15 40l5.7-9.5c0.8-0.6 1.2-1.5 0.9-2.4l-0.8-2.4C20 24.2 18.2 20.7 15 18c-3.2 0-6-2.5-6-5.5s2.8-5.5 6-5.5z"
-                  fill="#00ccff"
-                  animate={{
-                    pathLength: [0.7, 1],
-                    fill: ["#00ccff", "#66ffff", "#00ccff"],
-                  }}
-                  transition={{
-                    duration: 1.2,
+                    duration: 2,
                     repeat: Infinity,
                     repeatType: "reverse",
                     ease: "easeInOut",
-                    delay: 0.2
-                  }}
-                />
-                <motion.path
-                  d="M15 15c-2.8 0-5.2 1.6-6.3 4.1l-0.5 1.4c-0.2 0.6 0 1.2 0.4 1.6L15 40l5.4-9.9c0.4-0.4 0.6-1 0.4-1.6l-0.5-1.4C20.2 16.6 17.8 15 15 15z"
-                  fill="#66ffff"
-                  animate={{
-                    pathLength: [0.7, 1],
-                    fill: ["#66ffff", "#00ccff", "#66ffff"],
-                  }}
-                  transition={{
-                    duration: 1.2,
-                    repeat: Infinity,
-                    repeatType: "reverse",
-                    ease: "easeInOut",
-                    delay: 0.4
                   }}
                 />
               </motion.svg>
