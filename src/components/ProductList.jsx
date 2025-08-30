@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { API_URL } from '../config';
-import { useLocation, useNavigate, Link } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { showToast } from './utils';
 import ProductCard from './ProductCard';
 import SearchBar from './SearchBar';
@@ -39,16 +39,37 @@ const ProductList = ({ reviews, setReviews, selectedCategory }) => {
 
   // Categories
   const categories = [
-    { name: 'All', color: '#00aaff' },
-    { name: 'Phones', color: '#00aaff' },
-    { name: 'TVs', color: '#8a8a8a' },
-    { name: 'Laptops', color: '#2ba8db' },
-    { name: 'Appliances', color: '#00aaff' },
-    { name: 'Gaming', color: '#8a2be2' },
-    { name: 'Accessories', color: '#4CAF50' },
+    { name: 'All', color: '#1976d2' },
+    { name: 'Phones', color: '#1976d2' },
+    { name: 'TVs', color: '#546e7a' },
+    { name: 'Laptops', color: '#0288d1' },
+    { name: 'Appliances', color: '#1976d2' },
+    { name: 'Gaming', color: '#8e24aa' },
+    { name: 'Accessories', color: '#2e7d32' },
   ];
   const [filterCategory, setFilterCategory] = useState('All');
   const productsPerPage = isMobile ? 12 : isTablet ? 16 : 20;
+
+  // Animation variants
+  const containerVariants = {
+    hidden: { opacity: 0 },
+    visible: {
+      opacity: 1,
+      transition: {
+        staggerChildren: 0.05,
+        duration: 0.3,
+        ease: 'easeInOut',
+      },
+    },
+  };
+  const itemVariants = {
+    hidden: { opacity: 0, y: 20 },
+    visible: {
+      opacity: 1,
+      y: 0,
+      transition: { duration: 0.3, ease: 'easeOut' },
+    },
+  };
 
   // Fetch current user
   useEffect(() => {
@@ -112,72 +133,61 @@ const ProductList = ({ reviews, setReviews, selectedCategory }) => {
     setCurrentPage(1);
   }, [selectedCategory, searchQuery, filterCategory]);
 
-  // Filter products
   const getFilteredProducts = () => {
     try {
+      // Ensure products is an array
       if (!Array.isArray(products)) return [];
-
+  
       const searchLower = searchQuery.toLowerCase();
-
+  
+      // Filter products based on category and search query
       return products.filter((product) => {
-        if (!product) return false;
-
+        if (!product) return false; // Skip invalid product
+  
         const categoryMatch = filterCategory === 'All' || product.category === filterCategory;
-
-        if (!searchQuery) return categoryMatch;
-
-        // Handle price range queries (e.g., "500-1000")
+        if (!searchQuery) return categoryMatch; // If no search query, return based on category match
+  
+        // Price range filtering
         const priceRangeMatch = searchQuery.match(/^(\d+)-(\d+)$/);
         if (priceRangeMatch) {
           const [min, max] = priceRangeMatch.slice(1).map(Number);
           return categoryMatch && product.price >= min && product.price <= max;
         }
-
-        // Flatten all relevant fields for search
+  
+        // Create a list of values to check for partial matches
         const productValues = [
           product.name?.toLowerCase(),
           product.description?.toLowerCase(),
           product.category?.toLowerCase(),
           product.price?.toString().toLowerCase(),
           product.user_id?.toString().toLowerCase(),
-          ...(product.extra_images || []).map(img => img.toLowerCase()),
-          ...(reviews
+          ...(product.extra_images?.map(img => img.toLowerCase()) || []), // Safely map extra images
+          ...reviews
             .filter(r => r.productId === product.id)
-            .map(r => [
+            .flatMap(r => [
               r.userName?.toLowerCase(),
               r.comment?.toLowerCase(),
               r.rating?.toString().toLowerCase(),
-            ])
-            .flat()),
+            ]),
         ];
-
-        // Check for exact matches (e.g., user_id or category)
+  
+        // Check for exact matches
         const exactMatches = [
           product.user_id?.toString() === searchQuery,
           product.category?.toLowerCase() === searchLower,
         ];
-
-        // Check for partial matches in any field
+  
+        // Check for partial matches (includes search string)
         const partialMatches = productValues.some(value => value?.includes(searchLower));
-
+  
         return categoryMatch && (exactMatches.some(Boolean) || partialMatches);
       });
     } catch (err) {
       console.error('Error filtering products:', err);
-      return [];
+      return []; // Return empty array on error
     }
   };
-
-  // Get product card size
-  const getProductCardSize = () => {
-    if (isMobile) {
-      const screenWidth = window.innerWidth;
-      const cardWidth = (screenWidth - 30) / 2;
-      return { width: `${cardWidth}px`, height: `${cardWidth * 1.5}px` };
-    }
-    if (isTablet) return { width: '180px', height: '270px' };
-    return { width: '220px', height: '330px' };
-  };
+  
 
   // Handlers
   const handleBuy = async (product) => {
@@ -190,7 +200,7 @@ const ProductList = ({ reviews, setReviews, selectedCategory }) => {
       const phone = prompt('Enter your phone number') || '';
       const email = prompt('Enter your email') || '';
       const location = prompt('Enter your delivery location') || '';
-      if (!phone || !email || !location) {
+      if (!phone || !email || location) {
         showToast('Phone, Email, and Location are required', 'error');
         return;
       }
@@ -205,7 +215,6 @@ const ProductList = ({ reviews, setReviews, selectedCategory }) => {
       const data = await res.json();
       if (res.ok) {
         showToast('Order placed successfully', 'success');
-        closeProductDetails();
       } else {
         showToast(data.message || 'Error placing order', 'error');
       }
@@ -226,7 +235,6 @@ const ProductList = ({ reviews, setReviews, selectedCategory }) => {
       if (res.ok) {
         setProducts(products.filter((p) => p.id !== productId));
         showToast('Product deleted successfully', 'success');
-        setShowDetailsModal(false);
         setTotalProducts((prev) => prev - 1);
       } else {
         const error = await res.json();
@@ -250,7 +258,6 @@ const ProductList = ({ reviews, setReviews, selectedCategory }) => {
         headers: { Authorization: `Bearer ${token}` },
       });
       if (res.ok) {
-        closeProductDetails();
         showToast('Successfully added to cart', 'success');
         window.dispatchEvent(new Event('cartUpdated'));
       } else {
@@ -417,6 +424,14 @@ const ProductList = ({ reviews, setReviews, selectedCategory }) => {
     setReviews(updatedReviews);
   };
 
+  // Grid columns: 2 on mobile, 3 on tablet, 5 on desktop
+  const gridColumns = isMobile
+    ? 'repeat(2, 1fr)'
+    : isTablet
+    ? 'repeat(3, 1fr)'
+    : 'repeat(5, 1fr)';
+  const gridGap = isMobile ? '1rem' : isTablet ? '1.5rem' : '2rem';
+
   // Render
   if (isLoading) {
     return (
@@ -427,6 +442,7 @@ const ProductList = ({ reviews, setReviews, selectedCategory }) => {
           alignItems: 'center',
           height: '100vh',
           backgroundColor: '#f5f5f5',
+          fontFamily: '"Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif',
         }}
       >
         <motion.div
@@ -435,8 +451,8 @@ const ProductList = ({ reviews, setReviews, selectedCategory }) => {
           style={{
             width: '80px',
             height: '80px',
-            border: '8px solid #21262d',
-            borderTop: '8px solid #00aaff',
+            border: '8px solid #e0e0e0',
+            borderTop: '8px solid #1976d2',
             borderRadius: '50%',
           }}
         />
@@ -455,21 +471,27 @@ const ProductList = ({ reviews, setReviews, selectedCategory }) => {
           height: '100vh',
           padding: '20px',
           textAlign: 'center',
-          backgroundColor: '#0d1117',
+          backgroundColor: '#f5f5f5',
+          fontFamily: '"Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif',
         }}
       >
-        <h3 style={{ color: '#d73a49', marginBottom: '20px' }}>Error Loading Products</h3>
-        <p style={{ color: '#8b949e', marginBottom: '20px' }}>{error}</p>
+        <h3 style={{ color: '#d81b60', marginBottom: '20px', fontSize: '24px', fontWeight: 600 }}>Error Loading Products</h3>
+        <p style={{ color: '#37474f', marginBottom: '20px', fontSize: '16px' }}>{error}</p>
         <button
           onClick={() => window.location.reload()}
           style={{
             padding: '10px 20px',
-            backgroundColor: '#00aaff',
+            backgroundColor: '#1976d2',
             color: '#fff',
             border: 'none',
-            borderRadius: '4px',
+            borderRadius: '6px',
             cursor: 'pointer',
+            fontSize: '16px',
+            fontWeight: 500,
+            transition: 'background-color 0.3s ease',
           }}
+          onMouseEnter={(e) => (e.target.style.backgroundColor = '#1565c0')}
+          onMouseLeave={(e) => (e.target.style.backgroundColor = '#1976d2')}
         >
           Retry
         </button>
@@ -492,6 +514,7 @@ const ProductList = ({ reviews, setReviews, selectedCategory }) => {
           padding: '20px',
           textAlign: 'center',
           backgroundColor: '#f5f5f5',
+          fontFamily: '"Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif',
         }}
       >
         <motion.div
@@ -531,7 +554,7 @@ const ProductList = ({ reviews, setReviews, selectedCategory }) => {
               marginTop: '20px',
               fontSize: '24px',
               fontWeight: '600',
-              color: '#333'
+              color: '#263238'
             }}
             initial={{ y: 20, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
@@ -542,7 +565,7 @@ const ProductList = ({ reviews, setReviews, selectedCategory }) => {
           <motion.p
             style={{
               fontSize: '16px',
-              color: '#666',
+              color: '#78909c',
               margin: '10px 0 20px',
               maxWidth: '80%'
             }}
@@ -557,19 +580,21 @@ const ProductList = ({ reviews, setReviews, selectedCategory }) => {
             whileTap={{ scale: 0.95 }}
           >
             <button
-              onClick={() => window.location.href = '/'}
+              onClick={() => navigate('/')}
               style={{
                 padding: '12px 24px',
-                backgroundColor: '#3f51b5',
+                backgroundColor: '#1976d2',
                 color: 'white',
                 border: 'none',
                 borderRadius: '6px',
                 fontSize: '16px',
                 cursor: 'pointer',
                 transition: 'all 0.3s ease',
-                boxShadow: '0 2px 8px rgba(63, 81, 181, 0.3)',
+                boxShadow: '0 2px 8px rgba(25, 118, 210, 0.3)',
                 marginTop: '15px'
               }}
+              onMouseEnter={(e) => (e.target.style.backgroundColor = '#1565c0')}
+              onMouseLeave={(e) => (e.target.style.backgroundColor = '#1976d2')}
             >
               Back Home
             </button>
@@ -580,7 +605,6 @@ const ProductList = ({ reviews, setReviews, selectedCategory }) => {
   }
 
   const filteredProducts = getFilteredProducts();
-  const cardSize = getProductCardSize();
 
   return (
     <div
@@ -588,26 +612,35 @@ const ProductList = ({ reviews, setReviews, selectedCategory }) => {
       style={{
         backgroundColor: '#f5f5f5',
         minHeight: '100vh',
-        paddingBottom: '80px',
+        padding: '0',
+        margin: '0',
+        fontFamily: '"Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif',
+        width: '100vw',
+        overflowX: 'hidden',
       }}
     >
       {/* Site Description */}
       <motion.div
         initial={{ y: -20, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
-        transition={{ duration: 0.5 }}
+        transition={{ duration: 0.5, ease: 'easeOut' }}
         style={{
           padding: isMobile ? '10px 15px' : '15px 60px',
           backgroundColor: '#fff',
-          boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
+          boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
           textAlign: 'center',
-          fontSize: isMobile ? '14px' : '16px',
-          color: '#666',
+          fontSize: isMobile ? '12px' : '16px',
+          color: '#546e7a',
+          borderRadius: '0',
+          marginBottom: '15px',
+          width: '100%',
+          boxSizing: 'border-box',
+          wordBreak: 'break-word',
+          hyphens: 'auto',
         }}
       >
         <p>
-          Welcome to our marketplace! Browse a wide range of products from electronics to appliances.
-          Find what you need, or list your own items for sale.
+          Explore a vibrant marketplace of electronics and appliances. Shop now or list your own products!
         </p>
       </motion.div>
 
@@ -615,11 +648,15 @@ const ProductList = ({ reviews, setReviews, selectedCategory }) => {
       <motion.div
         initial={{ y: -20, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
-        transition={{ duration: 0.5 }}
+        transition={{ duration: 0.5, ease: 'easeOut' }}
         style={{
-          padding: isMobile ? '15px' : '20px 60px',
-          backgroundColor: '#161b22',
-          boxShadow: '0 2px 10px rgba(0,0,0,0.4)',
+          padding: isMobile ? '10px 15px' : '15px 60px',
+          backgroundColor: '#263238',
+          boxShadow: '0 2px 10px rgba(0,0,0,0.2)',
+          borderRadius: '0',
+          marginBottom: '15px',
+          width: '100%',
+          boxSizing: 'border-box',
         }}
       >
         <SearchBar onSearch={handleSearch} />
@@ -630,19 +667,19 @@ const ProductList = ({ reviews, setReviews, selectedCategory }) => {
         className="categories-wrapper"
         initial={{ y: -50, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
-        transition={{ duration: 0.3 }}
+        transition={{ duration: 0.3, ease: 'easeOut' }}
         style={{
           position: 'sticky',
           top: 0,
           zIndex: 100,
           backgroundColor: '#fff',
-          padding: isMobile ? '10px 0' : '15px 0',
+          padding: isMobile ? '8px 15px' : '15px 60px',
           boxShadow: '0 2px 5px rgba(0,0,0,0.1)',
-          width: '100vw',
-          marginLeft: 'calc(-50vw + 50%)',
+          width: '100%',
           borderBottom: '1px solid #e0e0e0',
           overflowX: 'auto',
           WebkitOverflowScrolling: 'touch',
+          boxSizing: 'border-box',
         }}
       >
         <div
@@ -650,12 +687,13 @@ const ProductList = ({ reviews, setReviews, selectedCategory }) => {
           style={{
             display: 'flex',
             overflowX: 'auto',
-            padding: '0 10px',
+            padding: '0',
             scrollbarWidth: 'none',
             msOverflowStyle: 'none',
-            gap: isMobile ? '8px' : '10px',
+            gap: isMobile ? '6px' : '12px',
             width: 'max-content',
             minWidth: '100%',
+            justifyContent: 'flex-start',
           }}
         >
           {categories.map((category) => (
@@ -665,18 +703,19 @@ const ProductList = ({ reviews, setReviews, selectedCategory }) => {
               className="category-button"
               style={{
                 backgroundColor: filterCategory === category.name ? category.color : '#fff',
-                color: filterCategory === category.name ? '#fff' : '#666',
-                border: '1px solid #e0e0e0',
-                borderRadius: '4px',
-                padding: isMobile ? '6px 12px' : '10px 15px',
-                fontSize: isMobile ? '12px' : '14px',
-                fontWeight: 'bold',
+                color: filterCategory === category.name ? '#fff' : '#546e7a',
+                border: `1px solid ${filterCategory === category.name ? category.color : '#e0e0e0'}`,
+                borderRadius: '6px',
+                padding: isMobile ? '6px 10px' : '10px 16px',
+                fontSize: isMobile ? '11px' : '14px',
+                fontWeight: '600',
                 cursor: 'pointer',
                 whiteSpace: 'nowrap',
                 flexShrink: 0,
                 boxShadow: filterCategory === category.name ? `0 2px 5px ${category.color}80` : 'none',
-                transition: 'all 0.2s ease',
+                transition: 'all 0.3s ease',
               }}
+              whileHover={{ scale: 1.05, boxShadow: `0 2px 5px ${category.color}80` }}
               whileTap={{ scale: 0.95 }}
             >
               {category.name}
@@ -689,29 +728,31 @@ const ProductList = ({ reviews, setReviews, selectedCategory }) => {
       <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
-        transition={{ delay: 0.2 }}
+        transition={{ delay: 0.2, duration: 0.3, ease: 'easeOut' }}
         style={{
-          padding: isMobile ? '10px 15px' : '15px 30px',
-          color: '#666',
-          fontSize: '14px',
+          padding: isMobile ? '8px 15px' : '15px 60px',
+          color: '#546e7a',
+          fontSize: isMobile ? '12px' : '14px',
           backgroundColor: '#fff',
-          margin: '10px 15px',
-          borderRadius: '4px',
+          margin: '10px 0',
+          borderRadius: '0',
           boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
           display: 'flex',
           justifyContent: 'space-between',
           alignItems: 'center',
           flexWrap: 'wrap',
-          gap: '10px',
+          gap: '8px',
+          width: '100%',
+          boxSizing: 'border-box',
         }}
       >
-        <div>
+        <div style={{ flex: 1, minWidth: '0', wordBreak: 'break-word' }}>
           Showing {filteredProducts.length} of {totalProducts} {totalProducts === 1 ? 'product' : 'products'}
           {filterCategory !== 'All' && ` in ${filterCategory}`}
           {searchQuery && ` matching "${searchQuery}"`}
         </div>
         {totalPages > 1 && (
-          <div style={{ fontSize: '14px' }}>
+          <div style={{ fontSize: isMobile ? '12px' : '14px' }}>
             Page {currentPage} of {totalPages}
           </div>
         )}
@@ -720,51 +761,73 @@ const ProductList = ({ reviews, setReviews, selectedCategory }) => {
       {/* Product Grid */}
       <motion.div
         className="product-grid"
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ duration: 0.3 }}
+        variants={containerVariants}
+        initial="hidden"
+        animate="visible"
         style={{
           display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))',
-          gap: '2rem',
-          padding: '2rem 0',
+          gridTemplateColumns: gridColumns,
+          gap: gridGap,
+          padding: isMobile ? '1rem 15px' : '2rem 60px',
           position: 'relative',
-          minWidth: '0',
           width: '100%',
           justifyItems: 'center',
+          boxSizing: 'border-box',
         }}
       >
         {filteredProducts.map((product, index) => (
           <motion.div
             key={product?.id || index}
             className="product-card-wrapper"
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: index * 0.05, duration: 0.2 }}
-            whileHover={{ y: -5, boxShadow: '0 5px 15px rgba(0,0,0,0.1)', transition: { duration: 0.2 } }}
+            variants={itemVariants}
+            whileHover={{ y: -5, boxShadow: '0 5px 15px rgba(0,0,0,0.15)', transition: { duration: 0.2 } }}
             style={{
               borderRadius: '8px',
               overflow: 'hidden',
               backgroundColor: '#fff',
-              boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
+              boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
               border: '1px solid #e0e0e0',
               cursor: 'pointer',
-              minWidth: '0',
+              width: '100%',
+              maxWidth: '100%',
+              display: 'flex',
+              flexDirection: 'column',
             }}
           >
             {product && (
-              <ProductCard
-                product={product}
-                reviews={reviews.filter(r => r.productId === product.id)}
-                onSelect={openProductDetails}
-                onBuy={handleBuy}
-                onAddToCart={handleAddToCart}
-                onDelete={handleDelete}
-                onEdit={handleEditClick}
-                currentUser={currentUser}
-                isMobile={isMobile}
-                jumiaStyle={true}
-              />
+              <>
+                <ProductCard
+                  product={product}
+                  reviews={reviews.filter(r => r.productId === product.id)}
+                  onSelect={openProductDetails}
+                  onAddToCart={handleAddToCart}
+                  onDelete={handleDelete}
+                  onEdit={handleEditClick}
+                  currentUser={currentUser}
+                  isMobile={isMobile}
+                  jumiaStyle={true}
+                  style={{ width: '100%' }}
+                />
+                <motion.button
+                  onClick={() => handleBuy(product)}
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                  style={{
+                    padding: '8px',
+                    backgroundColor: '#1976d2',
+                    color: '#fff',
+                    border: 'none',
+                    borderRadius: '0 0 8px 8px',
+                    fontSize: '14px',
+                    fontWeight: '600',
+                    cursor: 'pointer',
+                    marginTop: 'auto',
+                    width: '100%',
+                  }}
+                >
+                  Order Now
+                </motion.button>
+              </>
             )}
           </motion.div>
         ))}
@@ -775,30 +838,36 @@ const ProductList = ({ reviews, setReviews, selectedCategory }) => {
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          transition={{ delay: 0.3 }}
+          transition={{ delay: 0.3, duration: 0.3, ease: 'easeOut' }}
           style={{
             display: 'flex',
             justifyContent: 'center',
             alignItems: 'center',
-            gap: '8px',
-            padding: '20px',
-            flexWrap: 'wrap',
+            gap: isMobile ? '4px' : '8px',
+            padding: isMobile ? '10px 15px' : '20px 60px',
+            flexWrap: 'nowrap',
+            overflowX: 'auto',
+            scrollbarWidth: 'none',
+            width: '100%',
+            boxSizing: 'border-box',
           }}
         >
           <motion.button
             onClick={() => handlePageChange(1)}
             disabled={currentPage === 1}
-            whileTap={{ scale: 0.95 }}
+            whileHover={{ scale: currentPage === 1 ? 1 : 1.05 }}
+            whileTap={{ scale: currentPage === 1 ? 1 : 0.95 }}
             style={{
-              padding: '8px 12px',
-              backgroundColor: currentPage === 1 ? '#21262d' : '#00aaff',
-              color: currentPage === 1 ? '#8b949e' : '#fff',
+              padding: isMobile ? '6px 8px' : '8px 12px',
+              backgroundColor: currentPage === 1 ? '#e0e0e0' : '#1976d2',
+              color: currentPage === 1 ? '#78909c' : '#fff',
               border: 'none',
-              borderRadius: '4px',
-              fontSize: '14px',
-              fontWeight: 'bold',
+              borderRadius: '6px',
+              fontSize: isMobile ? '12px' : '14px',
+              fontWeight: '600',
               cursor: currentPage === 1 ? 'default' : 'pointer',
-              minWidth: '40px',
+              minWidth: isMobile ? '30px' : '40px',
+              transition: 'all 0.3s ease',
             }}
           >
             First
@@ -806,17 +875,19 @@ const ProductList = ({ reviews, setReviews, selectedCategory }) => {
           <motion.button
             onClick={() => handlePageChange(Math.max(1, currentPage - 1))}
             disabled={currentPage === 1}
-            whileTap={{ scale: 0.95 }}
+            whileHover={{ scale: currentPage === 1 ? 1 : 1.05 }}
+            whileTap={{ scale: currentPage === 1 ? 1 : 0.95 }}
             style={{
-              padding: '8px 12px',
-              backgroundColor: currentPage === 1 ? '#21262d' : '#00aaff',
-              color: currentPage === 1 ? '#8b949e' : '#fff',
+              padding: isMobile ? '6px 8px' : '8px 12px',
+              backgroundColor: currentPage === 1 ? '#e0e0e0' : '#1976d2',
+              color: currentPage === 1 ? '#78909c' : '#fff',
               border: 'none',
-              borderRadius: '4px',
-              fontSize: '14px',
-              fontWeight: 'bold',
+              borderRadius: '6px',
+              fontSize: isMobile ? '12px' : '14px',
+              fontWeight: '600',
               cursor: currentPage === 1 ? 'default' : 'pointer',
-              minWidth: '40px',
+              minWidth: isMobile ? '30px' : '40px',
+              transition: 'all 0.3s ease',
             }}
           >
             Prev
@@ -831,17 +902,19 @@ const ProductList = ({ reviews, setReviews, selectedCategory }) => {
               <motion.button
                 key={pageNum}
                 onClick={() => handlePageChange(pageNum)}
+                whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
                 style={{
-                  padding: '8px 12px',
-                  backgroundColor: currentPage === pageNum ? '#0077cc' : '#00aaff',
+                  padding: isMobile ? '6px 8px' : '8px 12px',
+                  backgroundColor: currentPage === pageNum ? '#1565c0' : '#1976d2',
                   color: '#fff',
                   border: 'none',
-                  borderRadius: '4px',
-                  fontSize: '14px',
-                  fontWeight: 'bold',
+                  borderRadius: '6px',
+                  fontSize: isMobile ? '12px' : '14px',
+                  fontWeight: '600',
                   cursor: 'pointer',
-                  minWidth: '40px',
+                  minWidth: isMobile ? '30px' : '40px',
+                  transition: 'all 0.3s ease',
                 }}
               >
                 {pageNum}
@@ -851,17 +924,19 @@ const ProductList = ({ reviews, setReviews, selectedCategory }) => {
           <motion.button
             onClick={() => handlePageChange(Math.min(totalPages, currentPage + 1))}
             disabled={currentPage === totalPages}
-            whileTap={{ scale: 0.95 }}
+            whileHover={{ scale: currentPage === totalPages ? 1 : 1.05 }}
+            whileTap={{ scale: currentPage === totalPages ? 1 : 0.95 }}
             style={{
-              padding: '8px 12px',
-              backgroundColor: currentPage === totalPages ? '#21262d' : '#00aaff',
-              color: currentPage === totalPages ? '#8b949e' : '#fff',
+              padding: isMobile ? '6px 8px' : '8px 12px',
+              backgroundColor: currentPage === totalPages ? '#e0e0e0' : '#1976d2',
+              color: currentPage === totalPages ? '#78909c' : '#fff',
               border: 'none',
-              borderRadius: '4px',
-              fontSize: '14px',
-              fontWeight: 'bold',
+              borderRadius: '6px',
+              fontSize: isMobile ? '12px' : '14px',
+              fontWeight: '600',
               cursor: currentPage === totalPages ? 'default' : 'pointer',
-              minWidth: '40px',
+              minWidth: isMobile ? '30px' : '40px',
+              transition: 'all 0.3s ease',
             }}
           >
             Next
@@ -869,17 +944,19 @@ const ProductList = ({ reviews, setReviews, selectedCategory }) => {
           <motion.button
             onClick={() => handlePageChange(totalPages)}
             disabled={currentPage === totalPages}
-            whileTap={{ scale: 0.95 }}
+            whileHover={{ scale: currentPage === totalPages ? 1 : 1.05 }}
+            whileTap={{ scale: currentPage === totalPages ? 1 : 0.95 }}
             style={{
-              padding: '8px 12px',
-              backgroundColor: currentPage === totalPages ? '#21262d' : '#00aaff',
-              color: currentPage === totalPages ? '#8b949e' : '#fff',
+              padding: isMobile ? '6px 8px' : '8px 12px',
+              backgroundColor: currentPage === totalPages ? '#e0e0e0' : '#1976d2',
+              color: currentPage === totalPages ? '#78909c' : '#fff',
               border: 'none',
-              borderRadius: '4px',
-              fontSize: '14px',
-              fontWeight: 'bold',
+              borderRadius: '6px',
+              fontSize: isMobile ? '12px' : '14px',
+              fontWeight: '600',
               cursor: currentPage === totalPages ? 'default' : 'pointer',
-              minWidth: '40px',
+              minWidth: isMobile ? '30px' : '40px',
+              transition: 'all 0.3s ease',
             }}
           >
             Last
@@ -892,20 +969,20 @@ const ProductList = ({ reviews, setReviews, selectedCategory }) => {
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          transition={{ duration: 0.3 }}
+          transition={{ duration: 0.3, ease: 'easeOut' }}
           style={{
             display: 'flex',
             flexDirection: 'column',
             alignItems: 'center',
             justifyContent: 'center',
             height: '50vh',
-            color: '#e0e0e0',
+            color: '#546e7a',
             textAlign: 'center',
-            padding: '0 20px',
-            backgroundColor: '#161b22',
+            padding: '20px',
+            backgroundColor: '#fff',
             margin: '15px',
-            borderRadius: '4px',
-            boxShadow: '0 1px 3px rgba(0,0,0,0.4)',
+            borderRadius: '8px',
+            boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
           }}
         >
           <motion.img
@@ -913,10 +990,10 @@ const ProductList = ({ reviews, setReviews, selectedCategory }) => {
             alt="No results"
             width="120"
             animate={{ y: [0, -10, 0], scale: [1, 1.05, 1] }}
-            transition={{ duration: 2, repeat: Infinity }}
+            transition={{ duration: 2, repeat: Infinity, ease: 'easeInOut' }}
           />
-          <h3 style={{ marginTop: '20px', fontSize: '20px', color: '#e0e0e0' }}>No products found</h3>
-          <p style={{ fontSize: '14px', color: '#8b949e', maxWidth: '500px', marginTop: '10px' }}>
+          <h3 style={{ marginTop: '20px', fontSize: '20px', color: '#263238', fontWeight: 600 }}>No products found</h3>
+          <p style={{ fontSize: '14px', color: '#78909c', maxWidth: '500px', marginTop: '10px' }}>
             {`We couldn't find any products matching your ${searchQuery ? 'search' : 'category'} criteria. Try adjusting your filters.`}
           </p>
           <motion.button
@@ -924,20 +1001,23 @@ const ProductList = ({ reviews, setReviews, selectedCategory }) => {
               setFilterCategory('All');
               setSearchQuery('');
             }}
-            whileHover={{ scale: 1.03 }}
-            whileTap={{ scale: 0.97 }}
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
             style={{
               marginTop: '20px',
               padding: '10px 20px',
-              backgroundColor: '#00aaff',
+              backgroundColor: '#1976d2',
               color: '#fff',
               border: 'none',
-              borderRadius: '4px',
+              borderRadius: '6px',
               fontSize: '14px',
-              fontWeight: 'bold',
+              fontWeight: '600',
               cursor: 'pointer',
-              boxShadow: '0 2px 5px rgba(0,0,0,0.4)',
+              boxShadow: '0 2px 5px rgba(0,0,0,0.2)',
+              transition: 'all 0.3s ease',
             }}
+            onMouseEnter={(e) => (e.target.style.backgroundColor = '#1565c0')}
+            onMouseLeave={(e) => (e.target.style.backgroundColor = '#1976d2')}
           >
             Reset Filters
           </motion.button>
@@ -951,7 +1031,7 @@ const ProductList = ({ reviews, setReviews, selectedCategory }) => {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            transition={{ duration: 0.3 }}
+            transition={{ duration: 0.3, ease: 'easeInOut' }}
             style={{
               position: 'fixed',
               top: 0,
@@ -963,66 +1043,68 @@ const ProductList = ({ reviews, setReviews, selectedCategory }) => {
               display: 'flex',
               justifyContent: 'center',
               alignItems: 'center',
-              padding: '8px',
+              padding: isMobile ? '10px' : '15px',
+              overflowY: 'auto',
             }}
           >
             <motion.div
               initial={{ scale: 0.9, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.9, opacity: 0 }}
+              transition={{ duration: 0.3, ease: 'easeOut' }}
               style={{
-                backgroundColor: '#161b22',
-                borderRadius: '10px',
+                backgroundColor: '#fff',
+                borderRadius: '12px',
                 width: '100%',
-                maxWidth: isMobile ? '90vw' : '800px',
-                maxHeight: isMobile ? '90vh' : '90vh',
+                maxWidth: isMobile ? '95vw' : '800px',
+                maxHeight: isMobile ? '90vh' : '85vh',
                 padding: isMobile ? '1rem' : '2rem',
                 position: 'relative',
                 overflowY: 'auto',
-                color: '#e0e0e0',
-                boxShadow: '0 0 30px rgba(0,170,255,0.5)',
-                border: '1px solid #00aaff',
+                color: '#263238',
+                boxShadow: '0 0 30px rgba(25,118,210,0.3)',
+                border: '1px solid #e0e0e0',
+                boxSizing: 'border-box',
               }}
             >
               {/* Close Button */}
               <motion.button
                 onClick={closeProductDetails}
-                whileHover={{ scale: 1.05 }}
+                whileHover={{ scale: 1.05, backgroundColor: '#1565c0' }}
                 whileTap={{ scale: 0.95 }}
                 style={{
-                  position: 'sticky',
-                  top: '5px',
-                  right: '5px',
-                  background: '#00aaff',
+                  position: 'absolute',
+                  top: '10px',
+                  right: '10px',
+                  background: '#1976d2',
                   border: 'none',
                   fontSize: '16px',
                   cursor: 'pointer',
                   color: '#fff',
-                  width: '26px',
-                  height: '26px',
+                  width: '30px',
+                  height: '30px',
                   borderRadius: '50%',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  float: 'right',
                   zIndex: 2,
+                  transition: 'all 0.3s ease',
                 }}
               >
                 ×
               </motion.button>
-
               {/* Product Image */}
               <div
                 style={{
                   width: '100%',
-                  height: '160px',
+                  height: isMobile ? '160px' : '300px',
                   display: 'flex',
                   justifyContent: 'center',
                   alignItems: 'center',
-                  marginBottom: '8px',
-                  backgroundColor: '#0d1117',
-                  borderRadius: '4px',
-                  border: '1px solid #21262d',
+                  marginBottom: '15px',
+                  backgroundColor: '#f5f5f5',
+                  borderRadius: '8px',
+                  border: '1px solid #e0e0e0',
                 }}
               >
                 <img
@@ -1032,30 +1114,31 @@ const ProductList = ({ reviews, setReviews, selectedCategory }) => {
                     maxWidth: '100%',
                     maxHeight: '100%',
                     objectFit: 'contain',
+                    borderRadius: '8px',
                   }}
                 />
               </div>
-
               {/* Thumbnails */}
               <div
                 style={{
                   display: 'flex',
-                  gap: '5px',
+                  gap: '8px',
                   overflowX: 'auto',
-                  padding: '5px 0',
+                  padding: '8px 0',
                   scrollbarWidth: 'none',
-                  marginBottom: '8px',
+                  marginBottom: '15px',
                 }}
               >
                 {[selectedProduct.image_path, ...(selectedProduct.extra_images || [])].map((img, index) => (
-                  <div
+                  <motion.div
                     key={index}
                     onClick={() => setCurrentImageIndex(index)}
+                    whileHover={{ scale: 1.05 }}
                     style={{
-                      minWidth: '45px',
-                      height: '45px',
-                      border: currentImageIndex === index ? '1.5px solid #00aaff' : '1px solid #21262d',
-                      borderRadius: '3px',
+                      minWidth: isMobile ? '50px' : '60px',
+                      height: isMobile ? '50px' : '60px',
+                      border: currentImageIndex === index ? '2px solid #1976d2' : '1px solid #e0e0e0',
+                      borderRadius: '6px',
                       overflow: 'hidden',
                       cursor: 'pointer',
                       flexShrink: 0,
@@ -1066,152 +1149,140 @@ const ProductList = ({ reviews, setReviews, selectedCategory }) => {
                       alt={`Thumbnail ${index}`}
                       style={{ width: '100%', height: '100%', objectFit: 'cover' }}
                     />
-                  </div>
+                  </motion.div>
                 ))}
               </div>
-
               {/* Product Name */}
               <h3
                 style={{
-                  color: '#e0e0e0',
-                  margin: '0 0 10px 0',
-                  fontSize: '24px',
+                  color: '#263238',
+                  margin: '0 0 12px 0',
+                  fontSize: isMobile ? '18px' : '24px',
                   fontWeight: '600',
                   textAlign: 'center',
                 }}
               >
                 {selectedProduct.name}
               </h3>
-
               {/* Product Price */}
               <p
                 style={{
-                  fontSize: '22px',
+                  fontSize: isMobile ? '16px' : '22px',
                   fontWeight: '600',
-                  color: '#00aaff',
-                  margin: '0 0 16px 0',
+                  color: '#1976d2',
+                  margin: '0 0 12px 0',
                   textAlign: 'center',
                 }}
               >
                 KES {selectedProduct.price.toLocaleString()}
               </p>
-
               {/* Description */}
               <div
                 style={{
-                  backgroundColor: '#0d1117',
-                  padding: '12px',
-                  borderRadius: '4px',
-                  marginBottom: '16px',
-                  borderLeft: '3px solid #00aaff',
-                  fontSize: '16px',
-                  lineHeight: '1.6',
+                  backgroundColor: '#f5f5f5',
+                  padding: isMobile ? '10px' : '12px',
+                  borderRadius: '6px',
+                  marginBottom: '12px',
+                  borderLeft: '3px solid #1976d2',
+                  fontSize: isMobile ? '14px' : '16px',
+                  lineHeight: '1.5',
+                  maxHeight: '150px',
+                  overflowY: 'auto',
                 }}
               >
-                <p style={{ color: '#8b949e', margin: 0 }}>
+                <p style={{ color: '#546e7a', margin: 0, wordBreak: 'break-word' }}>
                   {selectedProduct.description}
                 </p>
               </div>
-
-
               {/* Category */}
               <div
                 style={{
-                  backgroundColor: '#0d1117',
-                  padding: '10px',
-                  borderRadius: '4px',
-                  border: '1px solid #21262d',
-                  marginBottom: '16px',
-                  fontSize: '16px',
+                  backgroundColor: '#f5f5f5',
+                  padding: isMobile ? '8px' : '10px',
+                  borderRadius: '6px',
+                  border: '1px solid #e0e0e0',
+                  marginBottom: '12px',
+                  fontSize: isMobile ? '14px' : '16px',
                 }}
               >
-                <p style={{ color: '#8b949e', margin: '0 0 5px 0' }}>Category</p>
-                <p style={{ color: '#e0e0e0', fontWeight: '500', margin: 0 }}>
+                <p style={{ color: '#78909c', margin: '0 0 5px 0' }}>Category</p>
+                <p style={{ color: '#263238', fontWeight: '500', margin: 0 }}>
                   {selectedProduct.category || 'N/A'}
                 </p>
               </div>
-
               {/* Action Buttons */}
-              <div style={{ display: 'flex', gap: '6px', marginBottom: '8px' }}>
-                <button
-                  onClick={() => handleBuy(selectedProduct)}
-                  style={{
-                    flex: 1,
-                    padding: '7px',
-                    backgroundColor: '#00aaff',
-                    color: '#fff',
-                    border: 'none',
-                    borderRadius: '4px',
-                    fontSize: '12px',
-                    fontWeight: '500',
-                    cursor: 'pointer',
-                  }}
-                >
-                  Order Now
-                </button>
-                <button
+              <div style={{ display: 'flex', gap: isMobile ? '6px' : '8px', marginBottom: '12px' }}>
+                <motion.button
                   onClick={() => handleAddToCart(selectedProduct)}
+                  whileHover={{ scale: 1.05, backgroundColor: '#1565c0' }}
+                  whileTap={{ scale: 0.95 }}
                   style={{
                     flex: 1,
-                    padding: '7px',
-                    backgroundColor: '#0071eb',
+                    padding: isMobile ? '8px' : '10px',
+                    backgroundColor: '#1976d2',
                     color: '#fff',
                     border: 'none',
-                    borderRadius: '4px',
-                    fontSize: '12px',
-                    fontWeight: '500',
+                    borderRadius: '6px',
+                    fontSize: isMobile ? '12px' : '14px',
+                    fontWeight: '600',
                     cursor: 'pointer',
+                    transition: 'all 0.3s ease',
                   }}
                 >
                   Add to Cart
-                </button>
+                </motion.button>
               </div>
-
               {/* Admin Actions */}
               {currentUser && (currentUser.is_admin || selectedProduct.user_id === currentUser.id) && (
                 <div
                   style={{
-                    backgroundColor: '#0d1117',
-                    padding: '8px',
-                    borderRadius: '4px',
-                    borderLeft: '3px solid #00aaff',
-                    fontSize: '12px',
+                    backgroundColor: '#f5f5f5',
+                    padding: isMobile ? '8px' : '10px',
+                    borderRadius: '6px',
+                    borderLeft: '3px solid #1976d2',
+                    fontSize: isMobile ? '12px' : '14px',
                   }}
                 >
-                  <p style={{ color: '#e0e0e0', fontWeight: '500', margin: '0 0 6px 0' }}>
+                  <p style={{ color: '#263238', fontWeight: '600', margin: '0 0 6px 0' }}>
                     Admin Actions
                   </p>
-                  <div style={{ display: 'flex', gap: '6px' }}>
-                    <button
+                  <div style={{ display: 'flex', gap: isMobile ? '6px' : '8px' }}>
+                    <motion.button
                       onClick={() => handleEditClick(selectedProduct)}
+                      whileHover={{ scale: 1.05, backgroundColor: '#1565c0' }}
+                      whileTap={{ scale: 0.95 }}
                       style={{
                         flex: 1,
-                        padding: '5px',
-                        backgroundColor: '#0071eb',
+                        padding: isMobile ? '6px' : '8px',
+                        backgroundColor: '#1976d2',
                         color: '#fff',
                         border: 'none',
-                        borderRadius: '3px',
-                        fontSize: '11px',
+                        borderRadius: '6px',
+                        fontSize: isMobile ? '11px': '13px',
                         cursor: 'pointer',
+                        transition: 'all 0.3s ease',
                       }}
                     >
                       Edit
-                    </button>
-                    <button
+                    </motion.button>
+                    <motion.button
                       onClick={() => handleDelete(selectedProduct.id)}
+                      whileHover={{ scale: 1.05, backgroundColor: '#c2185b' }}
+                      whileTap={{ scale: 0.95 }}
                       style={{
                         flex: 1,
-                        padding: '5px',
-                        backgroundColor: '#d73a49',
+                        padding: isMobile ? '6px' : '8px',
+                        backgroundColor: '#d81b60',
                         color: '#fff',
                         border: 'none',
-                        borderRadius: '3px',
-                        fontSize: '11px',
+                        borderRadius: '6px',
+                        fontSize: isMobile ? '11px' : '13px',
                         cursor: 'pointer',
+                        transition: 'all 0.3s ease',
                       }}
                     >
                       Delete
-                    </button>
+                    </motion.button>
                   </div>
                 </div>
               )}
@@ -1227,49 +1298,51 @@ const ProductList = ({ reviews, setReviews, selectedCategory }) => {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            transition={{ duration: 0.3 }}
+            transition={{ duration: 0.3, ease: 'easeInOut' }}
             style={{
               position: 'fixed',
               top: 0,
               left: 0,
               right: 0,
               bottom: 0,
-              backgroundColor: 'rgba(0,0,0,0.9)',
+              backgroundColor: 'rgba(0,0,0,0.8)',
               zIndex: 1001,
               display: 'flex',
               justifyContent: 'center',
               alignItems: 'center',
               padding: isMobile ? '10px' : '20px',
+              overflowY: 'auto',
             }}
           >
             <motion.div
               initial={{ scale: 0.9, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.9, opacity: 0 }}
-              transition={{ type: 'spring', damping: 25 }}
+              transition={{ type: 'spring', damping: 25, stiffness: 300 }}
               style={{
-                backgroundColor: '#222',
-                borderRadius: '10px',
+                backgroundColor: '#fff',
+                borderRadius: '12px',
                 width: '100%',
                 maxWidth: isMobile ? '95vw' : '600px',
-                maxHeight: isMobile ? '95vh' : '90vh',
+                maxHeight: isMobile ? '90vh' : '90vh',
                 padding: isMobile ? '15px' : '30px',
                 position: 'relative',
                 overflowY: 'auto',
-                color: '#fff',
-                boxShadow: '0 0 30px rgba(0,113,235,0.5)',
-                border: '1px solid #0071eb',
+                color: '#263238',
+                boxShadow: '0 0 30px rgba(25,118,210,0.3)',
+                border: '1px solid #e0e0e0',
+                boxSizing: 'border-box',
               }}
             >
               <motion.button
                 onClick={() => setEditingProduct(null)}
-                whileHover={{ rotate: 90, backgroundColor: '#0063c7' }}
+                whileHover={{ scale: 1.05, backgroundColor: '#1565c0' }}
                 whileTap={{ scale: 0.9 }}
                 style={{
                   position: 'absolute',
                   top: '10px',
                   right: '10px',
-                  background: '#0071eb',
+                  background: '#1976d2',
                   border: 'none',
                   fontSize: '18px',
                   cursor: 'pointer',
@@ -1281,16 +1354,17 @@ const ProductList = ({ reviews, setReviews, selectedCategory }) => {
                   alignItems: 'center',
                   justifyContent: 'center',
                   zIndex: 2,
+                  transition: 'all 0.3s ease',
                 }}
               >
                 ×
               </motion.button>
-              <h2 style={{ color: '#fff', marginBottom: '20px', fontSize: isMobile ? '20px' : '24px', textAlign: 'center' }}>
+              <h2 style={{ color: '#263238', marginBottom: '15px', fontSize: isMobile ? '18px' : '24px', textAlign: 'center', fontWeight: 600 }}>
                 Edit Product
               </h2>
               <form onSubmit={handleEditSubmit}>
-                <div style={{ marginBottom: '15px' }}>
-                  <label style={{ display: 'block', marginBottom: '8px', color: '#aaa', fontSize: isMobile ? '14px' : '16px' }}>
+                <div style={{ marginBottom: '12px' }}>
+                  <label style={{ display: 'block', marginBottom: '6px', color: '#78909c', fontSize: isMobile ? '12px' : '16px', fontWeight: 500 }}>
                     Product Name *
                   </label>
                   <input
@@ -1301,17 +1375,20 @@ const ProductList = ({ reviews, setReviews, selectedCategory }) => {
                     required
                     style={{
                       width: '100%',
-                      padding: isMobile ? '10px' : '12px',
-                      borderRadius: '4px',
-                      border: '1px solid #444',
-                      backgroundColor: '#333',
-                      color: '#fff',
-                      fontSize: isMobile ? '14px' : '16px',
+                      padding: isMobile ? '8px' : '12px',
+                      borderRadius: '6px',
+                      border: '1px solid #e0e0e0',
+                      backgroundColor: '#f5f5f5',
+                      color: '#263238',
+                      fontSize: isMobile ? '12px' : '16px',
+                      transition: 'all 0.3s ease',
                     }}
+                    onFocus={(e) => (e.target.style.borderColor = '#1976d2')}
+                    onBlur={(e) => (e.target.style.borderColor = '#e0e0e0')}
                   />
                 </div>
-                <div style={{ marginBottom: '15px' }}>
-                  <label style={{ display: 'block', marginBottom: '8px', color: '#aaa', fontSize: isMobile ? '14px' : '16px' }}>
+                <div style={{ marginBottom: '12px' }}>
+                  <label style={{ display: 'block', marginBottom: '6px', color: '#78909c', fontSize: isMobile ? '12px' : '16px', fontWeight: 500 }}>
                     Description
                   </label>
                   <textarea
@@ -1320,17 +1397,21 @@ const ProductList = ({ reviews, setReviews, selectedCategory }) => {
                     onChange={handleEditFormChange}
                     style={{
                       width: '100%',
-                      padding: isMobile ? '10px' : '12px',
-                      borderRadius: '4px',
-                      backgroundColor: '#333',
-                      color: '#fff',
-                      fontSize: isMobile ? '14px' : '16px',
-                      minHeight: '100px',
+                      padding: isMobile ? '8px' : '12px',
+                      borderRadius: '6px',
+                      backgroundColor: '#f5f5f5',
+                      color: '#263238',
+                      fontSize: isMobile ? '12px' : '16px',
+                      minHeight: '80px',
+                      border: '1px solid #e0e0e0',
+                      transition: 'all 0.3s ease',
                     }}
+                    onFocus={(e) => (e.target.style.borderColor = '#1976d2')}
+                    onBlur={(e) => (e.target.style.borderColor = '#e0e0e0')}
                   />
                 </div>
-                <div style={{ marginBottom: '15px' }}>
-                  <label style={{ display: 'block', marginBottom: '8px', color: '#aaa', fontSize: isMobile ? '14px' : '16px' }}>
+                <div style={{ marginBottom: '12px' }}>
+                  <label style={{ display: 'block', marginBottom: '6px', color: '#78909c', fontSize: isMobile ? '12px' : '16px', fontWeight: 500 }}>
                     Price *
                   </label>
                   <input
@@ -1343,17 +1424,20 @@ const ProductList = ({ reviews, setReviews, selectedCategory }) => {
                     step="0.01"
                     style={{
                       width: '100%',
-                      padding: isMobile ? '10px' : '12px',
-                      borderRadius: '4px',
-                      border: '1px solid #444',
-                      backgroundColor: '#333',
-                      color: '#fff',
-                      fontSize: isMobile ? '14px' : '16px',
+                      padding: isMobile ? '8px' : '12px',
+                      borderRadius: '6px',
+                      border: '1px solid #e0e0e0',
+                      backgroundColor: '#f5f5f5',
+                      color: '#263238',
+                      fontSize: isMobile ? '12px' : '16px',
+                      transition: 'all 0.3s ease',
                     }}
+                    onFocus={(e) => (e.target.style.borderColor = '#1976d2')}
+                    onBlur={(e) => (e.target.style.borderColor = '#e0e0e0')}
                   />
                 </div>
-                <div style={{ marginBottom: '15px' }}>
-                  <label style={{ display: 'block', marginBottom: '8px', color: '#aaa', fontSize: isMobile ? '14px' : '16px' }}>
+                <div style={{ marginBottom: '12px' }}>
+                  <label style={{ display: 'block', marginBottom: '6px', color: '#78909c', fontSize: isMobile ? '12px' : '16px', fontWeight: 500 }}>
                     Category
                   </label>
                   <select
@@ -1362,13 +1446,16 @@ const ProductList = ({ reviews, setReviews, selectedCategory }) => {
                     onChange={handleEditFormChange}
                     style={{
                       width: '100%',
-                      padding: isMobile ? '10px' : '12px',
-                      borderRadius: '4px',
-                      border: '1px solid #444',
-                      backgroundColor: '#333',
-                      color: '#fff',
-                      fontSize: isMobile ? '14px' : '16px',
+                      padding: isMobile ? '8px' : '12px',
+                      borderRadius: '6px',
+                      border: '1px solid #e0e0e0',
+                      backgroundColor: '#f5f5f5',
+                      color: '#263238',
+                      fontSize: isMobile ? '12px' : '16px',
+                      transition: 'all 0.3s ease',
                     }}
+                    onFocus={(e) => (e.target.style.borderColor = '#1976d2')}
+                    onBlur={(e) => (e.target.style.borderColor = '#e0e0e0')}
                   >
                     <option value="">Select a category</option>
                     {categories.filter((c) => c.name !== 'All').map((category) => (
@@ -1378,8 +1465,8 @@ const ProductList = ({ reviews, setReviews, selectedCategory }) => {
                     ))}
                   </select>
                 </div>
-                <div style={{ marginBottom: '15px' }}>
-                  <label style={{ display: 'block', marginBottom: '8px', color: '#aaa', fontSize: isMobile ? '14px' : '16px' }}>
+                <div style={{ marginBottom: '12px' }}>
+                  <label style={{ display: 'block', marginBottom: '6px', color: '#78909c', fontSize: isMobile ? '12px' : '16px', fontWeight: 500 }}>
                     Update Images (Optional)
                   </label>
                   <input
@@ -1389,34 +1476,39 @@ const ProductList = ({ reviews, setReviews, selectedCategory }) => {
                     onChange={handleImageChange}
                     style={{
                       width: '100%',
-                      padding: isMobile ? '10px' : '12px',
-                      borderRadius: '4px',
-                      border: '1px solid #444',
-                      backgroundColor: '#333',
-                      color: '#fff',
-                      fontSize: isMobile ? '14px' : '16px',
+                      padding: isMobile ? '8px' : '12px',
+                      borderRadius: '6px',
+                      border: '1px solid #e0e0e0',
+                      backgroundColor: '#f5f5f5',
+                      color: '#263238',
+                      fontSize: isMobile ? '12px' : '16px',
+                      transition: 'all 0.3s ease',
                     }}
                   />
-                  <p style={{ marginTop: '8px', fontSize: isMobile ? '12px' : '14px', color: '#777' }}>
+                  <p style={{ marginTop: '6px', fontSize: isMobile ? '10px' : '14px', color: '#78909c' }}>
                     First image will be used as the main image
                   </p>
                 </div>
                 {editImagePreviews.length > 0 && (
-                  <div style={{ marginBottom: '15px' }}>
-                    <label style={{ display: 'block', marginBottom: '8px', color: '#aaa', fontSize: isMobile ? '14px' : '16px' }}>
+                  <div style={{ marginBottom: '12px' }}>
+                    <label style={{ display: 'block', marginBottom: '6px', color: '#78909c', fontSize: isMobile ? '12px' : '16px', fontWeight: 500 }}>
                       Image Previews
                     </label>
-                    <div style={{ display: 'flex', gap: '8px', overflowX: 'auto', padding: '8px 0' }}>
+                    <div style={{ display: 'flex', gap: '8px', overflowX: 'auto', padding: '8px 0', scrollbarWidth: 'none' }}>
                       {editImagePreviews.map((preview, index) => (
-                        <div
+                        <motion.div
                           key={index}
+                          initial={{ opacity: 0, scale: 0.9 }}
+                          animate={{ opacity: 1, scale: 1 }}
+                          transition={{ duration: 0.2 }}
                           style={{
-                            minWidth: '60px',
-                            height: '60px',
-                            border: '1px solid #444',
-                            borderRadius: '5px',
+                            minWidth: isMobile ? '50px' : '60px',
+                            height: isMobile ? '50px' : '60px',
+                            border: '1px solid #e0e0e0',
+                            borderRadius: '6px',
                             overflow: 'hidden',
                             position: 'relative',
+                            flexShrink: 0,
                           }}
                         >
                           <img
@@ -1425,33 +1517,36 @@ const ProductList = ({ reviews, setReviews, selectedCategory }) => {
                             style={{ width: '100%', height: '100%', objectFit: 'cover' }}
                           />
                           {index >= (editImages.length > 0 ? 1 : 0) && (
-                            <button
+                            <motion.button
                               onClick={(e) => {
                                 e.stopPropagation();
                                 const newPreviews = [...editImagePreviews];
                                 newPreviews.splice(index, 1);
                                 setEditImagePreviews(newPreviews);
                               }}
+                              whileHover={{ scale: 1.1, backgroundColor: '#c2185b' }}
+                              whileTap={{ scale: 0.9 }}
                               style={{
                                 position: 'absolute',
                                 top: '2px',
                                 right: '2px',
-                                background: 'rgba(0,0,0,0.7)',
-                                color: 'white',
+                                background: 'rgba(0,0,0,0.6)',
+                                color: '#fff',
                                 border: 'none',
                                 borderRadius: '50%',
-                                width: '20px',
-                                height: '20px',
+                                width: '18px',
+                                height: '18px',
                                 display: 'flex',
                                 alignItems: 'center',
                                 justifyContent: 'center',
                                 cursor: 'pointer',
+                                transition: 'all 0.3s ease',
                               }}
                             >
                               ×
-                            </button>
+                            </motion.button>
                           )}
-                        </div>
+                        </motion.div>
                       ))}
                     </div>
                   </div>
@@ -1459,24 +1554,25 @@ const ProductList = ({ reviews, setReviews, selectedCategory }) => {
                 <div
                   style={{
                     display: 'flex',
-                    gap: isMobile ? '10px' : '15px',
-                    marginTop: '20px',
+                    gap: isMobile ? '6px' : '15px',
+                    marginTop: '15px',
                   }}
                 >
                   <motion.button
                     type="submit"
-                    whileHover={{ scale: 1.05, backgroundColor: '#0063c7' }}
+                    whileHover={{ scale: 1.05, backgroundColor: '#1565c0' }}
                     whileTap={{ scale: 0.95 }}
                     style={{
-                      padding: isMobile ? '12px' : '12px 25px',
-                      backgroundColor: '#0071eb',
+                      padding: isMobile ? '10px' : '12px 25px',
+                      backgroundColor: '#1976d2',
                       color: '#fff',
                       border: 'none',
-                      borderRadius: '4px',
-                      fontSize: isMobile ? '14px' : '16px',
-                      fontWeight: 'bold',
+                      borderRadius: '6px',
+                      fontSize: isMobile ? '12px' : '16px',
+                      fontWeight: '600',
                       cursor: 'pointer',
                       flex: 1,
+                      transition: 'all 0.3s ease',
                     }}
                   >
                     Save Changes
@@ -1484,18 +1580,19 @@ const ProductList = ({ reviews, setReviews, selectedCategory }) => {
                   <motion.button
                     type="button"
                     onClick={() => setEditingProduct(null)}
-                    whileHover={{ scale: 1.05, backgroundColor: '#444' }}
+                    whileHover={{ scale: 1.05, backgroundColor: '#e0e0e0' }}
                     whileTap={{ scale: 0.95 }}
                     style={{
-                      padding: isMobile ? '12px' : '12px 25px',
-                      backgroundColor: '#333',
-                      color: '#fff',
-                      border: '1px solid #555',
-                      borderRadius: '4px',
-                      fontSize: isMobile ? '14px' : '16px',
-                      fontWeight: 'bold',
+                      padding: isMobile ? '10px' : '12px 25px',
+                      backgroundColor: '#f5f5f5',
+                      color: '#263238',
+                      border: '1px solid #e0e0e0',
+                      borderRadius: '6px',
+                      fontSize: isMobile ? '12px' : '16px',
+                      fontWeight: '600',
                       cursor: 'pointer',
                       flex: 1,
+                      transition: 'all 0.3s ease',
                     }}
                   >
                     Cancel
@@ -1506,35 +1603,6 @@ const ProductList = ({ reviews, setReviews, selectedCategory }) => {
           </motion.div>
         )}
       </AnimatePresence>
-
-      {/* Fixed Back Home Button */}
-      <motion.button
-        whileHover={{ scale: 1.05 }}
-        whileTap={{ scale: 0.95 }}
-        onClick={() => navigate('/')}
-        style={{
-          position: 'fixed',
-          bottom: '20px',
-          left: '50%',
-          transform: 'translateX(-50%)',
-          zIndex: 999,
-          padding: '12px 24px',
-          backgroundColor: '#00aaff',
-          color: '#fff',
-          border: 'none',
-          borderRadius: '25px',
-          fontSize: '16px',
-          fontWeight: '600',
-          cursor: 'pointer',
-          boxShadow: '0 4px 12px rgba(0, 0, 0, 0.3)',
-          display: 'flex',
-          alignItems: 'center',
-          gap: '8px',
-        }}
-      >
-        <span>🏠</span>
-        <span>Back Home</span>
-      </motion.button>
     </div>
   );
 };
