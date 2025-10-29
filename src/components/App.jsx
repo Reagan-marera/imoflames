@@ -12,10 +12,10 @@ import NotFound from './NotFound';
 import CartPage from './CartPage';
 import ContactUsForm from './Contact Us';
 import './App.css';
-import './global.css';
 import UserManagement from './UserManagement';
 import ProductList from './ProductList';
 import ForgotPassword from './ForgotPassword';
+import ProductDetails from './ProductDetails';
 
 function App() {
   return (
@@ -29,6 +29,7 @@ function App() {
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
             <Route path="/products" element={<ProductList />} />
+            <Route path="/products/:productId" element={<ProductDetails />} />
             <Route path="/upload" element={<ProductForm />} />
             <Route path="/payment" element={<PaymentForm />} />
             <Route path="/admin" element={<AdminDashboard />} />
