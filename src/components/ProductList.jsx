@@ -6,8 +6,8 @@ import ProductCard from './ProductCard';
 import { useMediaQuery } from 'react-responsive';
 import { motion, AnimatePresence } from 'framer-motion';
 import { FiSearch } from 'react-icons/fi';
+import './ProductList.css';
 
-// Categories data
 const categories = [
   { name: 'All', color: '#1976d2' },
   { name: 'Phones', color: '#1976d2' },
@@ -23,7 +23,6 @@ const categories = [
   { name: 'Workstations', color: '#455a64' },
 ];
 
-// SearchBar Component
 const SearchBar = ({ searchQuery, onSearch, isMobile }) => (
   <motion.div
     initial={{ y: -20, opacity: 0 }}
@@ -86,14 +85,12 @@ const SearchBar = ({ searchQuery, onSearch, isMobile }) => (
   </motion.div>
 );
 
-// FeaturedCarousel Component
 const FeaturedCarousel = ({ products, isMobile }) => {
   const [currentSlide, setCurrentSlide] = useState(0);
   const slides = [];
   for (let i = 0; i < products.length; i += 2) {
     slides.push(products.slice(i, i + 2));
   }
-
   useEffect(() => {
     if (slides.length === 0) return;
     const interval = setInterval(() => {
@@ -101,9 +98,7 @@ const FeaturedCarousel = ({ products, isMobile }) => {
     }, 3000);
     return () => clearInterval(interval);
   }, [slides.length]);
-
   if (slides.length === 0) return null;
-
   return (
     <motion.div
       style={{
@@ -225,13 +220,8 @@ const FeaturedCarousel = ({ products, isMobile }) => {
   );
 };
 
-// Main ProductList Component
-const ProductList = ({ selectedCategory }) => {
-  // State
+const ProductList = ({ reviews, setReviews, selectedCategory }) => {
   const [products, setProducts] = useState([]);
-  const [selectedProduct, setSelectedProduct] = useState(null);
-  const [showDetailsModal, setShowDetailsModal] = useState(false);
-  const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [editingProduct, setEditingProduct] = useState(null);
   const [editFormData, setEditFormData] = useState({
     name: '',
@@ -250,8 +240,6 @@ const ProductList = ({ selectedCategory }) => {
   const [currentUser, setCurrentUser] = useState(null);
   const [filterCategory, setFilterCategory] = useState('All');
   const [carouselProducts, setCarouselProducts] = useState([]);
-
-  // Hooks
   const location = useLocation();
   const token = localStorage.getItem('token');
   const navigate = useNavigate();
@@ -259,7 +247,6 @@ const ProductList = ({ selectedCategory }) => {
   const isTablet = useMediaQuery({ query: '(min-width: 769px) and (max-width: 1024px)' });
   const productsPerPage = isMobile ? 20 : 30;
 
-  // Animation variants
   const containerVariants = {
     hidden: { opacity: 0 },
     visible: {
@@ -271,7 +258,6 @@ const ProductList = ({ selectedCategory }) => {
       },
     },
   };
-
   const itemVariants = {
     hidden: { opacity: 0, y: 0 },
     visible: {
@@ -281,7 +267,6 @@ const ProductList = ({ selectedCategory }) => {
     },
   };
 
-  // Fetch current user
   useEffect(() => {
     const fetchCurrentUser = async () => {
       if (!token) return;
@@ -303,7 +288,6 @@ const ProductList = ({ selectedCategory }) => {
     fetchCurrentUser();
   }, [token]);
 
-  // Fetch products
   useEffect(() => {
     const fetchProducts = async () => {
       setIsLoading(true);
@@ -315,10 +299,8 @@ const ProductList = ({ selectedCategory }) => {
         if (selectedCategory) queryParams.set('category', selectedCategory);
         if (searchQuery) queryParams.set('search', searchQuery);
         if (filterCategory !== 'All') queryParams.set('category', filterCategory);
-
         const headers = {};
         if (token) headers.Authorization = `Bearer ${token}`;
-
         const res = await fetch(`${API_URL}/api/products?${queryParams.toString()}`, { headers });
         if (!res.ok) {
           const errorText = await res.text();
@@ -340,7 +322,6 @@ const ProductList = ({ selectedCategory }) => {
     fetchProducts();
   }, [location.search, token, selectedCategory, searchQuery, currentPage, productsPerPage, filterCategory]);
 
-  // Shuffle and set carousel products
   useEffect(() => {
     if (products.length > 0) {
       const shuffled = [...products].sort(() => 0.5 - Math.random());
@@ -348,12 +329,10 @@ const ProductList = ({ selectedCategory }) => {
     }
   }, [products]);
 
-  // Reset page on filter change
   useEffect(() => {
     setCurrentPage(1);
   }, [selectedCategory, searchQuery, filterCategory]);
 
-  // Filter products
   const getFilteredProducts = () => {
     try {
       if (!Array.isArray(products)) return [];
@@ -362,15 +341,32 @@ const ProductList = ({ selectedCategory }) => {
         if (!product) return false;
         const categoryMatch = filterCategory === 'All' || product.category === filterCategory;
         if (!searchQuery) return categoryMatch;
+        const priceRangeMatch = searchQuery.match(/^(\d+)-(\d+)$/);
+        if (priceRangeMatch) {
+          const [min, max] = priceRangeMatch.slice(1).map(Number);
+          return categoryMatch && product.price >= min && product.price <= max;
+        }
         const productValues = [
           product.name?.toLowerCase(),
           product.description?.toLowerCase(),
           product.category?.toLowerCase(),
           product.price?.toString().toLowerCase(),
           product.user_id?.toString().toLowerCase(),
-          ...(product.extra_images?.map((img) => img.toLowerCase()) || []),
+          ...(product.extra_images?.map(img => img.toLowerCase()) || []),
+          ...reviews
+            .filter(r => r.productId === product.id)
+            .flatMap(r => [
+              r.userName?.toLowerCase(),
+              r.comment?.toLowerCase(),
+              r.rating?.toString().toLowerCase(),
+            ]),
         ];
-        return categoryMatch && productValues.some((value) => value?.includes(searchLower));
+        const exactMatches = [
+          product.user_id?.toString() === searchQuery,
+          product.category?.toLowerCase() === searchLower,
+        ];
+        const partialMatches = productValues.some(value => value?.includes(searchLower));
+        return categoryMatch && (exactMatches.some(Boolean) || partialMatches);
       });
     } catch (err) {
       console.error('Error filtering products:', err);
@@ -378,7 +374,6 @@ const ProductList = ({ selectedCategory }) => {
     }
   };
 
-  // Handlers
   const handleBuy = async (product) => {
     try {
       if (!token) {
@@ -459,40 +454,8 @@ const ProductList = ({ selectedCategory }) => {
     }
   };
 
-  const openProductDetails = (product) => {
-    setSelectedProduct(product);
-    setCurrentImageIndex(0);
-    setShowDetailsModal(true);
-  };
-
-  const closeProductDetails = () => {
-    setShowDetailsModal(false);
-    setSelectedProduct(null);
-  };
-
-  const nextImage = () => {
-    if (!selectedProduct) return;
-    setCurrentImageIndex((prev) => {
-      const totalImages = selectedProduct.extra_images ? selectedProduct.extra_images.length + 1 : 1;
-      return (prev + 1) % totalImages;
-    });
-  };
-
-  const prevImage = () => {
-    if (!selectedProduct) return;
-    setCurrentImageIndex((prev) => {
-      const totalImages = selectedProduct.extra_images ? selectedProduct.extra_images.length + 1 : 1;
-      return (prev - 1 + totalImages) % totalImages;
-    });
-  };
-
-  const getCurrentImage = () => {
-    if (!selectedProduct) return '';
-    if (currentImageIndex === 0) return `${API_URL}/api/uploads/${selectedProduct.image_path}`;
-    if (selectedProduct.extra_images && selectedProduct.extra_images[currentImageIndex - 1]) {
-      return `${API_URL}/api/uploads/${selectedProduct.extra_images[currentImageIndex - 1]}`;
-    }
-    return '';
+  const handleProductSelect = (product) => {
+    navigate(`/products/${product.id}`);
   };
 
   const handleEditClick = (product) => {
@@ -540,9 +503,6 @@ const ProductList = ({ selectedCategory }) => {
         const updatedProduct = await res.json();
         setProducts(products.map((p) => (p.id === updatedProduct.id ? updatedProduct : p)));
         setEditingProduct(null);
-        if (selectedProduct?.id === updatedProduct.id) {
-          setSelectedProduct(updatedProduct);
-        }
         showToast('Product updated successfully', 'success');
       } else {
         const error = await res.json();
@@ -580,11 +540,9 @@ const ProductList = ({ selectedCategory }) => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
-  // Grid layout: Responsive columns
   const gridColumns = isMobile ? 'repeat(2, 1fr)' : 'repeat(5, 1fr)';
   const gridGap = isMobile ? '4px' : '6px';
 
-  // Render
   if (isLoading) {
     return (
       <div
@@ -633,7 +591,6 @@ const ProductList = ({ selectedCategory }) => {
             color: '#000',
             border: 'none',
             borderRadius: '6px',
-            cursor: 'pointer',
             fontSize: '14px',
           }}
         >
@@ -656,9 +613,6 @@ const ProductList = ({ selectedCategory }) => {
   if (products.length === 0 && !isLoading) {
     return (
       <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ duration: 0.5 }}
         style={{
           display: 'flex',
           flexDirection: 'column',
@@ -707,7 +661,6 @@ const ProductList = ({ selectedCategory }) => {
         boxSizing: 'border-box',
       }}
     >
-      {/* Carousel and Search Bar Side by Side */}
       <div
         style={{
           display: 'flex',
@@ -728,7 +681,6 @@ const ProductList = ({ selectedCategory }) => {
         </div>
       </div>
 
-      {/* Category Filter Buttons */}
       <motion.div
         style={{
           position: 'sticky',
@@ -782,7 +734,6 @@ const ProductList = ({ selectedCategory }) => {
         </div>
       </motion.div>
 
-      {/* Product Count and Pagination Info */}
       <motion.div
         style={{
           padding: isMobile ? '6px 8px' : '8px 12px',
@@ -804,10 +755,13 @@ const ProductList = ({ selectedCategory }) => {
           {filterCategory !== 'All' && ` in ${filterCategory}`}
           {searchQuery && ` matching "${searchQuery}"`}
         </div>
-        {totalPages > 1 && <div style={{ fontSize: isMobile ? '11px' : '13px' }}>Page {currentPage} of {totalPages}</div>}
+        {totalPages > 1 && (
+          <div>
+            Page {currentPage} of {totalPages}
+          </div>
+        )}
       </motion.div>
 
-      {/* Product Grid: Centered and Responsive */}
       <div
         style={{
           display: 'flex',
@@ -852,7 +806,7 @@ const ProductList = ({ selectedCategory }) => {
                 <>
                   <ProductCard
                     product={product}
-                    onSelect={openProductDetails}
+                    onSelect={handleProductSelect}
                     onAddToCart={handleAddToCart}
                     onDelete={handleDelete}
                     onEdit={handleEditClick}
@@ -886,9 +840,11 @@ const ProductList = ({ selectedCategory }) => {
         </motion.div>
       </div>
 
-      {/* Pagination */}
       {totalPages > 1 && (
         <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.3, duration: 0.3, ease: 'easeOut' }}
           style={{
             display: 'flex',
             justifyContent: 'center',
@@ -906,7 +862,6 @@ const ProductList = ({ selectedCategory }) => {
             whileHover={{ scale: currentPage === 1 ? 1 : 1.05 }}
             whileTap={{ scale: currentPage === 1 ? 1 : 0.95 }}
             style={{
-              padding: isMobile ? '5px 6px' : '6px 10px',
               backgroundColor: currentPage === 1 ? '#555' : '#FFD700',
               color: currentPage === 1 ? '#aaa' : '#000',
               border: 'none',
@@ -915,6 +870,7 @@ const ProductList = ({ selectedCategory }) => {
               fontWeight: '600',
               cursor: currentPage === 1 ? 'default' : 'pointer',
               minWidth: isMobile ? '28px' : '35px',
+              padding: isMobile ? '5px 6px' : '6px 10px',
             }}
           >
             First
@@ -925,7 +881,6 @@ const ProductList = ({ selectedCategory }) => {
             whileHover={{ scale: currentPage === 1 ? 1 : 1.05 }}
             whileTap={{ scale: currentPage === 1 ? 1 : 0.95 }}
             style={{
-              padding: isMobile ? '5px 6px' : '6px 10px',
               backgroundColor: currentPage === 1 ? '#555' : '#FFD700',
               color: currentPage === 1 ? '#aaa' : '#000',
               border: 'none',
@@ -934,6 +889,7 @@ const ProductList = ({ selectedCategory }) => {
               fontWeight: '600',
               cursor: currentPage === 1 ? 'default' : 'pointer',
               minWidth: isMobile ? '28px' : '35px',
+              padding: isMobile ? '5px 6px' : '6px 10px',
             }}
           >
             Prev
@@ -951,7 +907,6 @@ const ProductList = ({ selectedCategory }) => {
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
                 style={{
-                  padding: isMobile ? '5px 6px' : '6px 10px',
                   backgroundColor: currentPage === pageNum ? '#FFD700' : '#333',
                   color: '#fff',
                   border: 'none',
@@ -960,6 +915,7 @@ const ProductList = ({ selectedCategory }) => {
                   fontWeight: '600',
                   cursor: 'pointer',
                   minWidth: isMobile ? '28px' : '35px',
+                  padding: isMobile ? '5px 6px' : '6px 10px',
                 }}
               >
                 {pageNum}
@@ -972,7 +928,6 @@ const ProductList = ({ selectedCategory }) => {
             whileHover={{ scale: currentPage === totalPages ? 1 : 1.05 }}
             whileTap={{ scale: currentPage === totalPages ? 1 : 0.95 }}
             style={{
-              padding: isMobile ? '5px 6px' : '6px 10px',
               backgroundColor: currentPage === totalPages ? '#555' : '#FFD700',
               color: currentPage === totalPages ? '#aaa' : '#000',
               border: 'none',
@@ -981,6 +936,7 @@ const ProductList = ({ selectedCategory }) => {
               fontWeight: '600',
               cursor: currentPage === totalPages ? 'default' : 'pointer',
               minWidth: isMobile ? '28px' : '35px',
+              padding: isMobile ? '5px 6px' : '6px 10px',
             }}
           >
             Next
@@ -991,7 +947,6 @@ const ProductList = ({ selectedCategory }) => {
             whileHover={{ scale: currentPage === totalPages ? 1 : 1.05 }}
             whileTap={{ scale: currentPage === totalPages ? 1 : 0.95 }}
             style={{
-              padding: isMobile ? '5px 6px' : '6px 10px',
               backgroundColor: currentPage === totalPages ? '#555' : '#FFD700',
               color: currentPage === totalPages ? '#aaa' : '#000',
               border: 'none',
@@ -1000,6 +955,7 @@ const ProductList = ({ selectedCategory }) => {
               fontWeight: '600',
               cursor: currentPage === totalPages ? 'default' : 'pointer',
               minWidth: isMobile ? '28px' : '35px',
+              padding: isMobile ? '5px 6px' : '6px 10px',
             }}
           >
             Last
@@ -1007,7 +963,6 @@ const ProductList = ({ selectedCategory }) => {
         </motion.div>
       )}
 
-      {/* No Products Found */}
       {filteredProducts.length === 0 && products.length > 0 && (
         <motion.div
           style={{
@@ -1027,9 +982,9 @@ const ProductList = ({ selectedCategory }) => {
           <motion.img
             src="/images/icons/search-empty.png"
             alt="No results"
-            width="100"
             animate={{ y: [0, -8, 0], scale: [1, 1.03, 1] }}
             transition={{ duration: 2, repeat: Infinity, ease: 'easeInOut' }}
+            style={{ width: '100px', height: '100px' }}
           />
           <h3 style={{ marginTop: '15px', fontSize: '18px', color: '#263238', fontWeight: 600 }}>No products found</h3>
           <p style={{ fontSize: '13px', color: '#78909c', maxWidth: '500px', marginTop: '8px', textAlign: 'center' }}>
@@ -1060,250 +1015,6 @@ const ProductList = ({ selectedCategory }) => {
         </motion.div>
       )}
 
-      {/* Product Details Modal */}
-      <AnimatePresence>
-        {showDetailsModal && selectedProduct && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.3, ease: 'easeInOut' }}
-            style={{
-              position: 'fixed',
-              top: 0,
-              left: 0,
-              right: 0,
-              bottom: 0,
-              backgroundColor: 'rgba(0,0,0,0.7)',
-              zIndex: 1000,
-              display: 'flex',
-              justifyContent: 'center',
-              alignItems: 'center',
-              padding: isMobile ? '8px' : '12px',
-              overflowY: 'auto',
-            }}
-          >
-            <motion.div
-              initial={{ scale: 0.9, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0.9, opacity: 0 }}
-              transition={{ duration: 0.3, ease: 'easeOut' }}
-              style={{
-                backgroundColor: '#fff',
-                borderRadius: '10px',
-                width: '100%',
-                maxWidth: isMobile ? '95vw' : '700px',
-                maxHeight: isMobile ? '90vh' : '85vh',
-                padding: isMobile ? '12px' : '20px',
-                position: 'relative',
-                overflowY: 'auto',
-                color: '#263238',
-                boxShadow: '0 0 25px rgba(25,118,210,0.3)',
-                border: '1px solid #e0e0e0',
-                boxSizing: 'border-box',
-              }}
-            >
-              <motion.button
-                onClick={closeProductDetails}
-                whileHover={{ scale: 1.05, backgroundColor: '#1565c0' }}
-                whileTap={{ scale: 0.95 }}
-                style={{
-                  position: 'absolute',
-                  top: '8px',
-                  right: '8px',
-                  background: '#1976d2',
-                  border: 'none',
-                  fontSize: '15px',
-                  cursor: 'pointer',
-                  color: '#fff',
-                  width: '26px',
-                  height: '26px',
-                  borderRadius: '50%',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  zIndex: 2,
-                }}
-              >
-                ×
-              </motion.button>
-              <div
-                style={{
-                  width: '100%',
-                  height: isMobile ? '140px' : '250px',
-                  display: 'flex',
-                  justifyContent: 'center',
-                  alignItems: 'center',
-                  marginBottom: '12px',
-                  backgroundColor: '#f5f5f5',
-                  borderRadius: '6px',
-                  border: '1px solid #e0e0e0',
-                }}
-              >
-                <img
-                  src={getCurrentImage()}
-                  alt={selectedProduct.name}
-                  style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain', borderRadius: '6px' }}
-                />
-              </div>
-              <div
-                style={{
-                  display: 'flex',
-                  gap: '6px',
-                  overflowX: 'auto',
-                  padding: '6px 0',
-                  scrollbarWidth: 'none',
-                  marginBottom: '12px',
-                }}
-              >
-                {[selectedProduct.image_path, ...(selectedProduct.extra_images || [])].map((img, index) => (
-                  <motion.div
-                    key={index}
-                    onClick={() => setCurrentImageIndex(index)}
-                    whileHover={{ scale: 1.05 }}
-                    style={{
-                      minWidth: isMobile ? '45px' : '50px',
-                      height: isMobile ? '45px' : '50px',
-                      border: currentImageIndex === index ? '2px solid #FFD700' : '1px solid #e0e0e0',
-                      borderRadius: '6px',
-                      overflow: 'hidden',
-                      cursor: 'pointer',
-                      flexShrink: 0,
-                    }}
-                  >
-                    <img
-                      src={`${API_URL}/api/uploads/${img}`}
-                      alt={`Thumbnail ${index}`}
-                      style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-                    />
-                  </motion.div>
-                ))}
-              </div>
-              <h3
-                style={{
-                  color: '#263238',
-                  margin: '0 0 10px 0',
-                  fontSize: isMobile ? '16px' : '20px',
-                  fontWeight: '600',
-                  textAlign: 'center',
-                }}
-              >
-                {selectedProduct.name}
-              </h3>
-              <p
-                style={{
-                  fontSize: isMobile ? '14px' : '18px',
-                  fontWeight: '600',
-                  color: '#FFD700',
-                  margin: '0 0 10px 0',
-                  textAlign: 'center',
-                }}
-              >
-                KES {selectedProduct.price.toLocaleString()}
-              </p>
-              <div
-                style={{
-                  backgroundColor: '#f5f5f5',
-                  padding: isMobile ? '8px' : '10px',
-                  borderRadius: '6px',
-                  marginBottom: '10px',
-                  borderLeft: '3px solid #FFD700',
-                  fontSize: isMobile ? '13px' : '15px',
-                  lineHeight: '1.5',
-                  maxHeight: '130px',
-                  overflowY: 'auto',
-                }}
-              >
-                <p style={{ color: '#546e7a', margin: 0, wordBreak: 'break-word' }}>{selectedProduct.description}</p>
-              </div>
-              <div
-                style={{
-                  backgroundColor: '#f5f5f5',
-                  padding: isMobile ? '6px' : '8px',
-                  borderRadius: '6px',
-                  marginBottom: '10px',
-                  border: '1px solid #e0e0e0',
-                  fontSize: isMobile ? '13px' : '15px',
-                }}
-              >
-                <p style={{ color: '#78909c', margin: '0 0 4px 0' }}>Category</p>
-                <p style={{ color: '#263238', fontWeight: '500', margin: 0 }}>{selectedProduct.category || 'N/A'}</p>
-              </div>
-              <div style={{ display: 'flex', gap: isMobile ? '5px' : '6px', marginBottom: '10px' }}>
-                <motion.button
-                  onClick={() => handleAddToCart(selectedProduct)}
-                  whileHover={{ scale: 1.05, backgroundColor: '#1565c0' }}
-                  whileTap={{ scale: 0.95 }}
-                  style={{
-                    flex: 1,
-                    padding: isMobile ? '6px' : '8px',
-                    backgroundColor: '#FFD700',
-                    color: '#000',
-                    border: 'none',
-                    borderRadius: '6px',
-                    fontSize: isMobile ? '11px' : '13px',
-                    fontWeight: '600',
-                    cursor: 'pointer',
-                  }}
-                >
-                  Add to Cart
-                </motion.button>
-              </div>
-              {currentUser && (currentUser.is_admin || selectedProduct.user_id === currentUser.id) && (
-                <div
-                  style={{
-                    backgroundColor: '#f5f5f5',
-                    padding: isMobile ? '6px' : '8px',
-                    borderRadius: '6px',
-                    borderLeft: '3px solid #FFD700',
-                    fontSize: isMobile ? '11px' : '13px',
-                  }}
-                >
-                  <p style={{ color: '#263238', fontWeight: '600', margin: '0 0 5px 0' }}>Admin Actions</p>
-                  <div style={{ display: 'flex', gap: isMobile ? '5px' : '6px' }}>
-                    <motion.button
-                      onClick={() => handleEditClick(selectedProduct)}
-                      whileHover={{ scale: 1.05, backgroundColor: '#1565c0' }}
-                      whileTap={{ scale: 0.95 }}
-                      style={{
-                        flex: 1,
-                        padding: isMobile ? '5px' : '6px',
-                        backgroundColor: '#FFD700',
-                        color: '#000',
-                        border: 'none',
-                        borderRadius: '6px',
-                        fontSize: isMobile ? '10px' : '12px',
-                        cursor: 'pointer',
-                      }}
-                    >
-                      Edit
-                    </motion.button>
-                    <motion.button
-                      onClick={() => handleDelete(selectedProduct.id)}
-                      whileHover={{ scale: 1.05, backgroundColor: '#c2185b' }}
-                      whileTap={{ scale: 0.95 }}
-                      style={{
-                        flex: 1,
-                        padding: isMobile ? '5px' : '6px',
-                        backgroundColor: '#d81b60',
-                        color: '#fff',
-                        border: 'none',
-                        borderRadius: '6px',
-                        fontSize: isMobile ? '10px' : '12px',
-                        cursor: 'pointer',
-                      }}
-                    >
-                      Delete
-                    </motion.button>
-                  </div>
-                </div>
-              )}
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      {/* Edit Product Modal */}
       <AnimatePresence>
         {editingProduct && (
           <motion.div
