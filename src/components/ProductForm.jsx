@@ -24,11 +24,17 @@ const ProductForm = () => {
 
   const categories = [
     'Phones',
+    'Computers',
+    'softwares',
+    'Tablets',
+    'Appliances',
     'TVs',
     'Laptops',
     'Heaters',
     'Gaming Consoles',
     'Accessories',
+    'Workstations',
+    
   ];
 
   const handleImageChange = (e) => {
