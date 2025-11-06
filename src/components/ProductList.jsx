@@ -4,6 +4,7 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import { showToast } from './utils';
 import ProductCard from './ProductCard';
 import SearchBar from './SearchBar';
+import ProductCarousel from './ProductCarousel';
 import { useMediaQuery } from 'react-responsive';
 import { motion, AnimatePresence } from 'framer-motion';
 import '../styles/ProductList.css';
@@ -528,14 +529,12 @@ const ProductList = ({ reviews, setReviews, selectedCategory }) => {
 
   return (
     <div
-      className="product-list-page"
+      className="product-list-page product-list-container"
       style={{
         backgroundColor: '#f5f5f5',
         minHeight: '100vh',
-        padding: '0',
         margin: '0',
         fontFamily: '"Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif',
-        width: '100vw',
         overflowX: 'hidden',
       }}
     >
@@ -564,10 +563,15 @@ const ProductList = ({ reviews, setReviews, selectedCategory }) => {
         </p>
       </motion.div>
 
-      {/* Search Bar */}
-      <motion.div
-        initial={{ y: -20, opacity: 0 }}
-        animate={{ y: 0, opacity: 1 }}
+      {/* Carousel and Search Bar */}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: isMobile ? '10px 15px' : '15px 60px' }}>
+        <div style={{ flex: 1 }}>
+          <ProductCarousel category="Featured" reviews={reviews} />
+        </div>
+        <div style={{ flex: 1 }}>
+          <motion.div
+            initial={{ y: -20, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
         transition={{ duration: 0.5, ease: 'easeOut' }}
         style={{
           padding: isMobile ? '10px 15px' : '15px 60px',
@@ -581,6 +585,8 @@ const ProductList = ({ reviews, setReviews, selectedCategory }) => {
       >
         <SearchBar onSearch={handleSearch} />
       </motion.div>
+    </div>
+  </div>
 
       {/* Categories */}
       <motion.div
