@@ -12,6 +12,7 @@ import NotFound from './NotFound';
 import CartPage from './CartPage';
 import ContactUsForm from './Contact Us';
 import './App.css';
+import './global.css';
 import UserManagement from './UserManagement';
 import ProductList from './ProductList';
 import ForgotPassword from './ForgotPassword';
@@ -29,13 +30,13 @@ function App() {
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
             <Route path="/products" element={<ProductList />} />
-            <Route path="/products/:productId" element={<ProductDetails />} />
             <Route path="/upload" element={<ProductForm />} />
             <Route path="/payment" element={<PaymentForm />} />
             <Route path="/admin" element={<AdminDashboard />} />
             <Route path="/cart" element={<CartPage />} />
             <Route path="/forgot-password" element={<ForgotPassword />} />
             <Route path="/user-management" element={<UserManagement />} />
+            <Route path="/product/:id" element={<ProductDetails />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </div>
