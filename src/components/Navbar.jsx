@@ -2,15 +2,11 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import {
   FaHome, FaEnvelope, FaUpload, FaShoppingCart, FaSignInAlt,
-  FaUserPlus, FaUserCircle, FaMoon, FaSun, FaBars, FaTimes,
-  FaFire, FaLaptop, FaMobile, FaHeadphones
+  FaUserPlus, FaUserCircle, FaMoon, FaSun, FaBars, FaTimes
 } from 'react-icons/fa';
 import { motion, AnimatePresence } from 'framer-motion';
 import './Navbar.css';
 import { API_URL } from '../config';
-
-// Import your logo (replace with actual path)
-import imoflamesLogo from './imoflame.jpeg';
 
 const Navbar = () => {
   const [darkMode, setDarkMode] = useState(() => {
@@ -22,7 +18,6 @@ const Navbar = () => {
   const [scrolled, setScrolled] = useState(false);
   const [cartCount, setCartCount] = useState(0);
   const [hoveringLogo, setHoveringLogo] = useState(false);
-  const [showTechIcons, setShowTechIcons] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -111,96 +106,56 @@ const Navbar = () => {
         <motion.div
           className="logo-container"
           onClick={() => navigate('/')}
-          onHoverStart={() => {
-            setHoveringLogo(true);
-            setShowTechIcons(true);
-          }}
-          onHoverEnd={() => {
-            setHoveringLogo(false);
-            setTimeout(() => setShowTechIcons(false), 1000);
-          }}
+          onHoverStart={() => setHoveringLogo(true)}
+          onHoverEnd={() => setHoveringLogo(false)}
           whileHover={{ scale: 1.05 }}
           whileTap={{ scale: 0.95 }}
         >
-          <div className="logo-content">
+          <div className="logo-title">
             <motion.div
-              className="logo-image-container"
+              className="flammable-flame"
               animate={hoveringLogo ? {
                 scale: [1, 1.1, 1],
-                rotate: [0, -5, 5, 0],
-                filter: [
-                  "drop-shadow(0 0 5px rgba(0, 153, 255, 0.5))",
-                  "drop-shadow(0 0 15px rgba(0, 153, 255, 0.8))",
-                  "drop-shadow(0 0 5px rgba(0, 153, 255, 0.5))"
-                ]
+                filter: ["drop-shadow(0 0 2px #0099ff)", "drop-shadow(0 0 6px #0099ff)", "drop-shadow(0 0 2px #0099ff)"]
               } : {}}
-              transition={{ duration: 0.7 }}
+              transition={{ duration: 0.5 }}
             >
-              <img 
-                src={imoflamesLogo} 
-                alt="ImoFlames Logo" 
-                className="logo-image"
-              />
-              <motion.div 
-                className="logo-glow"
-                animate={hoveringLogo ? { opacity: [0, 1, 0] } : { opacity: 0 }}
-                transition={{ duration: 1.5, repeat: Infinity }}
-              />
-            </motion.div>
-            
-            <div className="logo-text-container">
-              <span className="logo-text">ImoFlames</span>
-              <motion.span 
-                className="logo-slogan"
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.3 }}
+              <motion.svg
+                width="40"
+                height="40"
+                viewBox="0 0 24 24"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
               >
-                Fine technology, Awesome products
-              </motion.span>
-            </div>
-            
-            <AnimatePresence>
-              {showTechIcons && (
-                <>
-                  <motion.div
-                    className="tech-icon laptop-icon"
-                    initial={{ opacity: 0, x: -20, y: -10 }}
-                    animate={{ opacity: 1, x: 0, y: 0 }}
-                    exit={{ opacity: 0, x: -20, y: -10 }}
-                    transition={{ duration: 0.5 }}
-                  >
-                    <FaLaptop />
-                  </motion.div>
-                  <motion.div
-                    className="tech-icon mobile-icon"
-                    initial={{ opacity: 0, x: 20, y: -10 }}
-                    animate={{ opacity: 1, x: 0, y: 0 }}
-                    exit={{ opacity: 0, x: 20, y: -10 }}
-                    transition={{ duration: 0.5, delay: 0.1 }}
-                  >
-                    <FaMobile />
-                  </motion.div>
-                  <motion.div
-                    className="tech-icon headphone-icon"
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: 20 }}
-                    transition={{ duration: 0.5, delay: 0.2 }}
-                  >
-                    <FaHeadphones />
-                  </motion.div>
-                </>
-              )}
-            </AnimatePresence>
+                <defs>
+                  <linearGradient id="flameGradient" x1="50%" y1="0%" x2="50%" y2="100%">
+                    <stop offset="0%" stopColor="#FFD700" />
+                    <stop offset="100%" stopColor="#FF4500" />
+                  </linearGradient>
+                </defs>
+                <motion.path
+                  d="M12 2C12 2 5 9.5 5 14.5C5 19.5 8.5 22 12 22S19 19.5 19 14.5C19 9.5 12 2 12 2Z"
+                  fill="url(#flameGradient)"
+                  animate={{
+                    scale: [1, 1.1, 1],
+                    rotate: [0, 5, -5, 0],
+                  }}
+                  transition={{
+                    duration: 2,
+                    repeat: Infinity,
+                    repeatType: "reverse",
+                    ease: "easeInOut",
+                  }}
+                />
+              </motion.svg>
+            </motion.div>
+            <span className="logo-text" style={{ color: "#0099ff" }}>ImoFlames</span>
           </div>
         </motion.div>
-        
         <ul className="desktop-menu">
           <DesktopNavLinks currentUser={currentUser} handleLogout={handleLogout} darkMode={darkMode} cartCount={cartCount} />
           <ThemeToggle darkMode={darkMode} toggle={toggleDarkMode} />
         </ul>
-        
         <motion.button
           onClick={toggleMenu}
           className={`hamburger-button ${menuOpen ? 'open' : ''}`}
@@ -210,7 +165,7 @@ const Navbar = () => {
         >
           <motion.div
             className="hamburger-line"
-            animate={menuOpen ? { rotate: 45, y: 7, backgroundColor: darkMode ? '#4dc4ff' : '#0099ff' } : { rotate: 0, y: 0 }}
+            animate={menuOpen ? { rotate: 45, y: 7 } : { rotate: 0, y: 0 }}
           />
           <motion.div
             className="hamburger-line"
@@ -218,11 +173,10 @@ const Navbar = () => {
           />
           <motion.div
             className="hamburger-line"
-            animate={menuOpen ? { rotate: -45, y: -7, backgroundColor: darkMode ? '#4dc4ff' : '#0099ff' } : { rotate: 0, y: 0 }}
+            animate={menuOpen ? { rotate: -45, y: -7 } : { rotate: 0, y: 0 }}
           />
         </motion.button>
       </nav>
-      
       <AnimatePresence>
         {menuOpen && (
           <>
@@ -251,8 +205,7 @@ const Navbar = () => {
   );
 };
 
-// Rest of the component code remains the same with enhanced animations...
-
+// Rest of your component code remains the same
 const DesktopNavLinks = ({ currentUser, handleLogout, darkMode, cartCount }) => (
   <>
     <NavLinkItem path="/" icon={<FaHome />} label="Home" darkMode={darkMode} />
@@ -305,49 +258,30 @@ const MobileNavLinks = ({ currentUser, handleLogout, closeMenu, darkMode, cartCo
 const NavLinkItem = ({ path, icon, label, darkMode, count }) => {
   const location = useLocation();
   const isActive = location.pathname === path;
-  const [isHovered, setIsHovered] = useState(false);
 
   return (
     <motion.li
       whileHover={{ scale: 1.05 }}
       whileTap={{ scale: 0.95 }}
-      onHoverStart={() => setIsHovered(true)}
-      onHoverEnd={() => setIsHovered(false)}
     >
       <Link to={path} className={`nav-link ${darkMode ? 'dark-mode' : ''} ${isActive ? 'active' : ''}`}>
         <motion.span
           className="nav-icon"
-          animate={isHovered ? { scale: 1.2, color: "#0099ff" } : { scale: 1, color: "inherit" }}
+          whileHover={{ scale: 1.2 }}
           style={{ position: 'relative' }}
         >
           {icon}
           {count > 0 && (
-            <motion.span 
-              className="cart-badge"
-              initial={{ scale: 0 }}
-              animate={{ scale: 1 }}
-              transition={{ type: "spring", stiffness: 500, damping: 15 }}
-            >
-              {count}
-            </motion.span>
+            <span className="cart-badge">{count}</span>
           )}
         </motion.span>
         <span className="nav-label">{label}</span>
         <motion.span
           className="nav-underline"
           initial={{ scaleX: 0 }}
-          animate={{ scaleX: isActive || isHovered ? 1 : 0 }}
+          animate={{ scaleX: isActive ? 1 : 0 }}
           transition={{ duration: 0.3 }}
         />
-        {isHovered && (
-          <motion.span
-            className="nav-link-glow"
-            initial={{ opacity: 0, scale: 0.8 }}
-            animate={{ opacity: 1, scale: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.3 }}
-          />
-        )}
       </Link>
     </motion.li>
   );
@@ -357,53 +291,30 @@ const NavLinkItemMobile = ({ path, icon, label, closeMenu, darkMode, count }) =>
   const navigate = useNavigate();
   const location = useLocation();
   const isActive = location.pathname === path;
-  const [isHovered, setIsHovered] = useState(false);
 
   return (
     <motion.li
-      whileHover={{ scale: 1.02, x: 5 }}
+      whileHover={{ scale: 1.05 }}
       whileTap={{ scale: 0.95 }}
-      onHoverStart={() => setIsHovered(true)}
-      onHoverEnd={() => setIsHovered(false)}
     >
       <Link
         to={path}
         onClick={() => { navigate(path); closeMenu(); }}
         className={`nav-link-mobile ${darkMode ? 'dark-mode' : ''} ${isActive ? 'active' : ''}`}
       >
-        <motion.span 
-          className="nav-icon"
-          animate={isHovered ? { scale: 1.2, color: "#0099ff" } : { scale: 1, color: "inherit" }}
-          style={{ position: 'relative' }}
-        >
+        <motion.span className="nav-icon" style={{ position: 'relative' }}>
           {icon}
           {count > 0 && (
-            <motion.span 
-              className="cart-badge"
-              initial={{ scale: 0 }}
-              animate={{ scale: 1 }}
-              transition={{ type: "spring", stiffness: 500, damping: 15 }}
-            >
-              {count}
-            </motion.span>
+            <span className="cart-badge">{count}</span>
           )}
         </motion.span>
         <span className="nav-label">{label}</span>
         <motion.span
           className="nav-underline"
           initial={{ scaleX: 0 }}
-          animate={{ scaleX: isActive || isHovered ? 1 : 0 }}
+          animate={{ scaleX: isActive ? 1 : 0 }}
           transition={{ duration: 0.3 }}
         />
-        {isHovered && (
-          <motion.span
-            className="nav-link-glow"
-            initial={{ opacity: 0, scale: 0.8 }}
-            animate={{ opacity: 1, scale: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.3 }}
-          />
-        )}
       </Link>
     </motion.li>
   );
@@ -411,28 +322,19 @@ const NavLinkItemMobile = ({ path, icon, label, closeMenu, darkMode, count }) =>
 
 const ProfileDropdown = ({ currentUser, handleLogout, darkMode }) => {
   const [open, setOpen] = useState(false);
-  const [isHovered, setIsHovered] = useState(false);
 
   return (
     <motion.div
       className={`dropdown ${open ? 'open' : ''} ${darkMode ? 'dark-mode' : ''}`}
       whileHover={{ scale: 1.05 }}
-      onHoverStart={() => setIsHovered(true)}
-      onHoverEnd={() => setIsHovered(false)}
     >
       <motion.button
         onClick={() => setOpen(!open)}
         className={`dropdown-btn ${darkMode ? 'dark-mode' : ''}`}
         aria-expanded={open}
         whileTap={{ scale: 0.95 }}
-        animate={isHovered ? { backgroundColor: darkMode ? 'rgba(77, 196, 255, 0.1)' : 'rgba(0, 153, 255, 0.1)' } : {}}
       >
-        <motion.div
-          animate={isHovered ? { rotate: [0, -10, 10, 0] } : {}}
-          transition={{ duration: 0.5 }}
-        >
-          <FaUserCircle className="user-icon" />
-        </motion.div>
+        <FaUserCircle className="user-icon" />
         <span className="username">{currentUser.username}</span>
         <motion.span
           className="dropdown-arrow"
@@ -445,34 +347,24 @@ const ProfileDropdown = ({ currentUser, handleLogout, darkMode }) => {
         {open && (
           <motion.div
             className={`dropdown-content ${darkMode ? 'dark-mode' : ''}`}
-            initial={{ opacity: 0, y: -20, scale: 0.9 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: -20, scale: 0.9 }}
-            transition={{ type: "spring", stiffness: 500, damping: 30 }}
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -20 }}
+            transition={{ duration: 0.2 }}
           >
             <ul className="dropdown-list">
               <motion.li
                 whileHover={{ x: 5 }}
-                transition={{ type: "spring", stiffness: 500, damping: 15 }}
               >
                 <Link to="/profile" className={`dropdown-item ${darkMode ? 'dark-mode' : ''}`}>
-                  <motion.span 
-                    className="dropdown-icon"
-                    whileHover={{ rotate: 360 }}
-                    transition={{ duration: 0.5 }}
-                  >👤</motion.span> Profile
+                  <span className="dropdown-icon">👤</span> Profile
                 </Link>
               </motion.li>
               <motion.li
                 whileHover={{ x: 5 }}
-                transition={{ type: "spring", stiffness: 500, damping: 15 }}
               >
                 <button onClick={handleLogout} className={`dropdown-item-btn ${darkMode ? 'dark-mode' : ''}`}>
-                  <motion.span 
-                    className="dropdown-icon"
-                    whileHover={{ rotate: 360 }}
-                    transition={{ duration: 0.5 }}
-                  >🔐</motion.span> Logout
+                  <span className="dropdown-icon">🔐</span> Logout
                 </button>
               </motion.li>
             </ul>
@@ -483,53 +375,32 @@ const ProfileDropdown = ({ currentUser, handleLogout, darkMode }) => {
   );
 };
 
-const ThemeToggle = ({ darkMode, toggle, mobile }) => {
-  const [isHovered, setIsHovered] = useState(false);
-
-  return (
-    <motion.button
-      onClick={toggle}
-      className={`theme-toggle ${mobile ? 'mobile' : ''} ${darkMode ? 'dark' : 'light'}`}
-      aria-label={darkMode ? 'Switch to light mode' : 'Switch to dark mode'}
-      whileHover={{ scale: 1.1 }}
-      whileTap={{ scale: 0.9 }}
-      onHoverStart={() => setIsHovered(true)}
-      onHoverEnd={() => setIsHovered(false)}
+const ThemeToggle = ({ darkMode, toggle, mobile }) => (
+  <motion.button
+    onClick={toggle}
+    className={`theme-toggle ${mobile ? 'mobile' : ''} ${darkMode ? 'dark' : 'light'}`}
+    aria-label={darkMode ? 'Switch to light mode' : 'Switch to dark mode'}
+    whileHover={{ scale: 1.1 }}
+    whileTap={{ scale: 0.9 }}
+  >
+    <motion.div
+      className="theme-toggle-inner"
+      animate={darkMode ? { x: mobile ? 0 : 24 } : { x: 0 }}
+      transition={{ type: 'spring', stiffness: 500, damping: 30 }}
     >
-      <motion.div
-        className="theme-toggle-inner"
-        animate={darkMode ? { x: mobile ? 0 : 24 } : { x: 0 }}
-        transition={{ type: 'spring', stiffness: 500, damping: 30 }}
-      >
-        {darkMode ? (
-          <>
-            <motion.div
-              animate={isHovered ? { rotate: 180, scale: 1.2 } : { rotate: 0, scale: 1 }}
-              transition={{ duration: 0.5 }}
-            >
-              <FaSun className="theme-icon" />
-            </motion.div>
-            {!mobile && <span className="theme-label">Light Mode</span>}
-          </>
-        ) : (
-          <>
-            <motion.div
-              animate={isHovered ? { rotate: 180, scale: 1.2 } : { rotate: 0, scale: 1 }}
-              transition={{ duration: 0.5 }}
-            >
-              <FaMoon className="theme-icon" />
-            </motion.div>
-            {!mobile && <span className="theme-label">Dark Mode</span>}
-          </>
-        )}
-      </motion.div>
-      <motion.span
-        className="theme-glow"
-        animate={isHovered ? { opacity: [0, 0.5, 0] } : { opacity: 0 }}
-        transition={{ duration: 1.5, repeat: Infinity }}
-      />
-    </motion.button>
-  );
-};
+      {darkMode ? (
+        <>
+          <FaSun className="theme-icon" />
+          {!mobile && <span className="theme-label">Light Mode</span>}
+        </>
+      ) : (
+        <>
+          <FaMoon className="theme-icon" />
+          {!mobile && <span className="theme-label">Dark Mode</span>}
+        </>
+      )}
+    </motion.div>
+  </motion.button>
+);
 
 export default Navbar;
