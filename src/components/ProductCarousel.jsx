@@ -13,7 +13,7 @@ const ProductCarousel = ({ category, reviews }) => {
           throw new Error(`Failed to fetch products for category: ${category}`);
         }
         const data = await res.json();
-        setProducts(data);
+        setProducts(data.products || []);
       } catch (err) {
         console.error(err);
         showToast(`Failed to load products for ${category}`, "error");
