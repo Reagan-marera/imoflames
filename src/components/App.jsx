@@ -37,6 +37,7 @@ function App() {
             <Route path="/forgot-password" element={<ForgotPassword />} />
             <Route path="/user-management" element={<UserManagement />} />
             <Route path="/product/:id" element={<ProductDetails />} />
+            <Route path="/product/edit/:id" element={<ProductForm />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </div>

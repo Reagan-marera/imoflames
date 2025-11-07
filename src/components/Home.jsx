@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import ProductList from './ProductList';
-import SearchBar from './SearchBar';
 import reviewsData from '../data/reviews.json';
 
 const Home = () => {
@@ -15,8 +14,6 @@ const Home = () => {
 
   return (
     <div className="container">
-      <div className="search-bar-container" style={{ marginBottom: '2rem' }}>
-      </div>
       <ProductList reviews={reviews} setReviews={setReviews} />
     </div>
   );

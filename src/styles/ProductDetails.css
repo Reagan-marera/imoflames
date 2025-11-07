@@ -1,0 +1,110 @@
+
+.product-details-container {
+  padding: 20px;
+  background-color: #0d1117;
+  color: #e0e0e0;
+  min-height: 100vh;
+}
+
+.product-details-container .back-button {
+  margin-bottom: 20px;
+  background-color: #21262d;
+  color: #e0e0e0;
+  border: 1px solid #30363d;
+  padding: 10px 20px;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+.product-details {
+  display: flex;
+  gap: 40px;
+  flex-wrap: wrap;
+}
+
+.product-image-container {
+  flex: 1 1 400px;
+}
+
+.product-image {
+  width: 100%;
+  border-radius: 8px;
+  border: 1px solid #21262d;
+}
+
+.product-info {
+  flex: 2 1 500px;
+}
+
+.product-name {
+  font-size: 32px;
+  font-weight: bold;
+}
+
+.product-price {
+  font-size: 28px;
+  font-weight: bold;
+  color: #00aaff;
+  margin: 10px 0 20px 0;
+}
+
+.product-description h3 {
+  border-bottom: 2px solid #21262d;
+  padding-bottom: 10px;
+}
+
+.product-description p {
+  line-height: 1.6;
+}
+
+.product-category {
+  margin-top: 20px;
+}
+
+.product-category span {
+  color: #00aaff;
+}
+
+.admin-actions {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 20px;
+}
+
+.admin-actions button {
+  color: #fff;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+.edit-button {
+  background-color: #0071eb;
+}
+
+.delete-button {
+  background-color: #f85149;
+}
+
+.user-actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 20px;
+}
+
+.user-actions button {
+  color: #fff;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+.add-to-cart-button {
+  background-color: #0071eb;
+}
+
+.order-now-button {
+  background-color: #28a745;
+}
