@@ -1,1 +1,3 @@
- INFO  Accepting connections at http://0.0.0.0:3000
+
+> my-ecommerce-app@0.1.0 start
+> react-scripts start

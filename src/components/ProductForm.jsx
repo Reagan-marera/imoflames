@@ -1,219 +1,139 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { API_URL } from '../config.js';
-import { showToast } from './utils.js';
+import { useLocation, useNavigate, useParams } from 'react-router-dom';
+import { API_URL } from '../config';
+import { showToast } from './utils';
 
 const ProductForm = () => {
-  const [name, setName] = useState('');
-  const [description, setDescription] = useState('');
-  const [price, setPrice] = useState('');
-  const [images, setImages] = useState([]);
-  const [previews, setPreviews] = useState([]);
-  const [category, setCategory] = useState(''); // Add category state
-  const token = localStorage.getItem('token');
+  const location = useLocation();
   const navigate = useNavigate();
+  const { id } = useParams();
+  const isEditMode = Boolean(id);
+  const { product } = location.state || {};
+
+  const [formData, setFormData] = useState({
+    name: '',
+    description: '',
+    price: '',
+    category: '',
+  });
+  const [images, setImages] = useState([]);
+  const [imagePreviews, setImagePreviews] = useState([]);
+  const token = localStorage.getItem('token');
+  const [isLoading, setIsLoading] = useState(false);
+
 
   useEffect(() => {
-    if (!token) {
-      showToast('You must be logged in to upload a product.', 'error');
-      navigate('/login');
+    if (isEditMode && product) {
+      setFormData({
+        name: product.name || '',
+        description: product.description || '',
+        price: product.price ? product.price.toString() : '',
+        category: product.category || '',
+      });
+      const previews = [];
+      if (product.image_path) {
+        previews.push(`${API_URL}/api/uploads/${product.image_path}`);
+      }
+      if (product.extra_images) {
+        const extraImages = Array.isArray(product.extra_images)
+          ? product.extra_images
+          : product.extra_images.split(',');
+        previews.push(...extraImages.map((img) => `${API_URL}/api/uploads/${img}`));
+      }
+      setImagePreviews(previews);
     }
-  }, [token, navigate]);
+  }, [product, isEditMode]);
 
-  const MAX_IMAGES = 10;
-
-  const categories = [
-    'Phones',
-    'TVs',
-    'Laptops',
-    'Heaters',
-    'Gaming Consoles',
-    'Accessories',
-  ];
-
-  const handleImageChange = (e) => {
-    const selectedFiles = Array.from(e.target.files);
-
-    if (selectedFiles.length + images.length > MAX_IMAGES) {
-      showToast(`You can upload a maximum of ${MAX_IMAGES} images`, "error");
-      return;
-    }
-
-    const validFiles = selectedFiles.filter(file => file.type.startsWith('image/'));
-    if (validFiles.length !== selectedFiles.length) {
-      showToast("Only image files are allowed", "error");
-    }
-
-    if (validFiles.length > 0) {
-      setImages(prev => [...prev, ...validFiles]);
-      const newPreviews = validFiles.map(file => URL.createObjectURL(file));
-      setPreviews(prev => [...prev, ...newPreviews]);
-    }
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
-  const removeImage = (index) => {
-    const newImages = [...images];
-    const newPreviews = [...previews];
-
-    URL.revokeObjectURL(newPreviews[index]);
-
-    newImages.splice(index, 1);
-    newPreviews.splice(index, 1);
-
-    setImages(newImages);
-    setPreviews(newPreviews);
+  const handleImageChange = (e) => {
+    const files = Array.from(e.target.files);
+    if (files.length > 0) {
+      setImages(files);
+      const previews = files.map((file) => URL.createObjectURL(file));
+      setImagePreviews(previews);
+    }
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-
-    if (!name.trim()) {
-      showToast("Product name is required", "error");
+    if (!formData.name || !formData.price) {
+      showToast('Name and price are required', 'error');
       return;
     }
-    if (!price || isNaN(parseFloat(price))) {
-      showToast("Valid price is required", "error");
-      return;
-    }
-    if (images.length === 0) {
-      showToast("At least one image is required", "error");
-      return;
-    }
-
-    const formData = new FormData();
-    formData.append('name', name);
-    formData.append('description', description);
-    formData.append('price', price);
-    formData.append('category', category); // Add category to form data
-    formData.append('user_id', JSON.parse(localStorage.getItem('user')).id);
-
-    images.forEach((file) => {
-      formData.append('images', file);
-    });
+    setIsLoading(true);
 
     try {
-      const res = await fetch(`${API_URL}/api/products`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-        },
-        body: formData,
+      const data = new FormData();
+      data.append('name', formData.name);
+      data.append('description', formData.description);
+      data.append('price', formData.price);
+      data.append('category', formData.category);
+      images.forEach((file) => {
+        data.append('images', file);
       });
 
+      const url = isEditMode ? `${API_URL}/api/products/${id}` : `${API_URL}/api/products`;
+      const method = isEditMode ? 'PUT' : 'POST';
+
+      const res = await fetch(url, {
+        method: method,
+        headers: { Authorization: `Bearer ${token}` },
+        body: data,
+      });
+
+      const resultData = await res.json();
+
       if (res.ok) {
-        previews.forEach(preview => URL.revokeObjectURL(preview));
-        showToast("Product uploaded successfully", "success");
-        navigate('/');
+        showToast(`Product ${isEditMode ? 'updated' : 'created'} successfully`, 'success');
+        const newProduct = resultData.product || resultData;
+        const productId = newProduct.id;
+        navigate(`/product/${productId}`);
       } else {
-        const errorData = await res.json();
-        if (errorData.reason === 'admin_approval_required') {
-          showToast(
-            "You do not have permission to upload products. Please contact the admin for upload permission.",
-            "error"
-          );
-        } else {
-          showToast(errorData.message || "Upload failed", "error");
-        }
+        showToast(resultData.message || `Failed to ${isEditMode ? 'update' : 'create'} product`, 'error');
       }
     } catch (err) {
-      console.error(err);
-      showToast("An error occurred during upload", "error");
+      console.error(`Error ${isEditMode ? 'updating' : 'creating'} product:`, err);
+      showToast(`Failed to ${isEditMode ? 'update' : 'create'} product`, 'error');
+    } finally {
+        setIsLoading(false);
     }
   };
 
   return (
-    <div className="container">
-      <div className="card">
-        <h2 className="section-title">Upload a New Product</h2>
-        <form onSubmit={handleSubmit}>
-          <div className="form-group">
-            <label>Name</label>
-            <input
-              type="text"
-              placeholder="Product name"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              required
-            />
+    <div style={{ padding: '20px', backgroundColor: '#0d1117', color: '#e0e0e0', minHeight: '100vh' }}>
+      <h2>{isEditMode ? 'Edit Product' : 'Create Product'}</h2>
+      <form onSubmit={handleSubmit}>
+        <div>
+          <label>Name</label>
+          <input type="text" name="name" value={formData.name} onChange={handleChange} />
+        </div>
+        <div>
+          <label>Description</label>
+          <textarea name="description" value={formData.description} onChange={handleChange}></textarea>
+        </div>
+        <div>
+          <label>Price</label>
+          <input type="number" name="price" value={formData.price} onChange={handleChange} />
+        </div>
+        <div>
+          <label>Category</label>
+          <input type="text" name="category" value={formData.category} onChange={handleChange} />
+        </div>
+        <div>
+          <label>Images</label>
+          <input type="file" multiple onChange={handleImageChange} />
+          <div>
+            {imagePreviews.map((preview, index) => (
+              <img key={index} src={preview} alt="Product Preview" style={{ width: '100px', height: '100px', objectFit: 'cover' }} />
+            ))}
           </div>
-
-          <div className="form-group">
-            <label>Description</label>
-            <textarea
-              placeholder="Detailed description of your product"
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              required
-            />
-          </div>
-
-          <div className="form-group">
-            <label>Price</label>
-            <input
-              type="number"
-              placeholder="0.00"
-              value={price}
-              onChange={(e) => setPrice(e.target.value)}
-              min="0"
-              step="0.01"
-              required
-            />
-          </div>
-
-          <div className="form-group">
-            <label>Category</label>
-            <select
-              value={category}
-              onChange={(e) => setCategory(e.target.value)}
-              required
-            >
-              <option value="">Select a category</option>
-              {categories.map((cat) => (
-                <option key={cat} value={cat}>
-                  {cat}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          <div className="form-group">
-            <label>Images (Up to {MAX_IMAGES})</label>
-            <div className="file-upload">
-              <label className="btn btn-secondary">
-                Select Images
-                <input
-                  type="file"
-                  multiple
-                  accept="image/*"
-                  onChange={handleImageChange}
-                  style={{ display: 'none' }}
-                />
-              </label>
-              <span>{images.length} image(s) selected</span>
-            </div>
-
-            <div className="image-previews">
-              {previews.map((preview, index) => (
-                <div key={index} className="image-preview">
-                  <img
-                    src={preview}
-                    alt={`Preview ${index}`}
-                  />
-                  <button
-                    type="button"
-                    className="remove-btn"
-                    onClick={() => removeImage(index)}
-                  >
-                    ×
-                  </button>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          <button type="submit" className="btn btn-primary">Upload Product</button>
-        </form>
-      </div>
+        </div>
+        <button type="submit" disabled={isLoading}>{isLoading ? 'Submitting...' : (isEditMode ? 'Update Product' : 'Create Product')}</button>
+      </form>
     </div>
   );
 };

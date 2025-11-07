@@ -3,19 +3,12 @@ import { Link } from 'react-router-dom';
 import { API_URL } from '../config';
 const ProductCard = ({
   product,
-  onBuy,
   onAddToCart,
   onDelete,
-  onEdit,
   currentUser,
   isMobile,
   jumiaStyle = true,
-  reviews: productReviews = [],
 }) => {
-  const averageRating = productReviews.length > 0
-    ? productReviews.reduce((acc, review) => acc + review.rating, 0) / productReviews.length
-    : 0;
-
   return (
     <Link to={`/product/${product.id}`} state={{ product }} style={{ textDecoration: 'none', color: 'inherit', height: '100%', display: 'flex' }}>
       <div
@@ -112,6 +105,24 @@ const ProductCard = ({
         >
           {product.description.substring(0, 50)}...
         </p>
+        <button
+          onClick={(e) => {
+            e.preventDefault();
+            onAddToCart(product);
+          }}
+          style={{
+            backgroundColor: '#0071eb',
+            color: '#fff',
+            border: 'none',
+            borderRadius: '5px',
+            padding: '8px 12px',
+            cursor: 'pointer',
+            marginTop: '10px',
+            width: '100%',
+          }}
+        >
+          Add to Cart
+        </button>
       </div>
 
       {/* Admin Actions (Visible on Hover or for Admins) */}
@@ -127,25 +138,7 @@ const ProductCard = ({
         >
           <button
             onClick={(e) => {
-              e.stopPropagation();
-              onEdit(product);
-            }}
-            style={{
-              backgroundColor: '#0071eb',
-              color: '#fff',
-              border: 'none',
-              borderRadius: '50%',
-              width: '30px',
-              height: '30px',
-              cursor: 'pointer',
-              fontSize: '12px',
-            }}
-          >
-            ✏️
-          </button>
-          <button
-            onClick={(e) => {
-              e.stopPropagation();
+              e.preventDefault();
               onDelete(product.id);
             }}
             style={{
