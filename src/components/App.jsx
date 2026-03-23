@@ -17,6 +17,11 @@ import UserManagement from './UserManagement';
 import ProductList from './ProductList';
 import ForgotPassword from './ForgotPassword';
 import ProductDetails from './ProductDetails';
+import Shop from './Shop'
+import Notifications from './Notifications';
+import Profile from './Profile'
+import Orders from './Orders';
+import OderForm from './OrderForm'
 
 function App() {
   return (
@@ -26,7 +31,12 @@ function App() {
         <div className="container">
           <Routes>
             <Route path="/" element={<Home />} />
+            <Route path="/notifications" element={<Notifications />} />
+            <Route path="/profile" element={<Profile />} />
+            <Route path="/orders" element={<Orders />} />
             <Route path="/contact-us" element={<ContactUsForm />} />
+            <Route path="/shop" element={<Shop />} />
+            <Route path="/order/:id" element={<OderForm />} />
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
             <Route path="/products" element={<ProductList />} />
