@@ -188,7 +188,7 @@ const Login = () => {
         
         // Redirect to products page
         setTimeout(() => {
-          navigate('/products');
+          navigate('/shop');
         }, 1500);
       } else {
         showToast(data.message || 'Login failed. Please try again.', "error");

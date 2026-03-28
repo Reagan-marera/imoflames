@@ -1,8 +1,12 @@
-// Shop.js - Add edit/delete functionality
+// Shop.js - Fixed product image display
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
-import { FaSearch, FaFilter, FaStar, FaShoppingCart, FaTimes, FaEdit, FaTrash } from 'react-icons/fa';
+import { 
+  FaSearch, FaFilter, FaShoppingCart, FaTimes, FaEdit, FaTrash, 
+  FaSlidersH, FaStar, FaStarHalfAlt, FaRegStar, FaBolt,
+  FaLaptop, FaMobileAlt, FaHeadphones, FaGamepad, FaCamera, FaTv
+} from 'react-icons/fa';
 import { API_URL } from '../config';
 import { showToast } from './utils';
 
@@ -12,11 +16,13 @@ const Shop = () => {
   const [categories, setCategories] = useState(['All']);
   const [selectedCategory, setSelectedCategory] = useState('All');
   const [searchTerm, setSearchTerm] = useState('');
+  const [priceRange, setPriceRange] = useState({ min: '', max: '' });
+  const [showPriceFilter, setShowPriceFilter] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [currentUser, setCurrentUser] = useState(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
-  const [floatingElements, setFloatingElements] = useState([]);
+  const [reviews, setReviews] = useState({});
   const [editingProduct, setEditingProduct] = useState(null);
   const [editFormData, setEditFormData] = useState({
     name: '',
@@ -30,23 +36,15 @@ const Shop = () => {
   const navigate = useNavigate();
   const productsPerPage = 12;
 
-  // Create floating animation elements
-  useEffect(() => {
-    const elements = ['🛍️', '🛒', '📦', '💎', '✨', '🎁', '🏷️', '⭐', '💫', '🌟'];
-    const newFloatingElements = [];
-    for (let i = 0; i < 12; i++) {
-      newFloatingElements.push({
-        id: i,
-        icon: elements[Math.floor(Math.random() * elements.length)],
-        left: Math.random() * 100,
-        animationDuration: 15 + Math.random() * 20,
-        animationDelay: Math.random() * 10,
-        size: 20 + Math.random() * 30,
-        opacity: 0.1 + Math.random() * 0.2
-      });
-    }
-    setFloatingElements(newFloatingElements);
-  }, []);
+  const categoryIcons = {
+    'Phones': <FaMobileAlt size={12} />,
+    'Laptops': <FaLaptop size={12} />,
+    'TVs': <FaTv size={12} />,
+    'Audio': <FaHeadphones size={12} />,
+    'Gaming': <FaGamepad size={12} />,
+    'Cameras': <FaCamera size={12} />,
+    'All': <FaBolt size={12} />
+  };
 
   useEffect(() => {
     fetchProducts();
@@ -55,7 +53,7 @@ const Shop = () => {
 
   useEffect(() => {
     filterProducts();
-  }, [searchTerm, products]);
+  }, [searchTerm, products, priceRange]);
 
   const fetchCurrentUser = async () => {
     if (!token) return;
@@ -69,6 +67,23 @@ const Shop = () => {
       }
     } catch (err) {
       console.error('Error fetching user:', err);
+    }
+  };
+
+  const fetchProductReviews = async (productId) => {
+    try {
+      const res = await fetch(`${API_URL}/api/products/${productId}/reviews`);
+      if (res.ok) {
+        const data = await res.json();
+        const averageRating = data.length > 0 
+          ? data.reduce((sum, r) => sum + r.rating, 0) / data.length 
+          : 0;
+        return { count: data.length, average: averageRating };
+      }
+      return { count: 0, average: 0 };
+    } catch (error) {
+      console.error('Error fetching reviews:', error);
+      return { count: 0, average: 0 };
     }
   };
 
@@ -93,9 +108,15 @@ const Shop = () => {
         setFilteredProducts(productsArray);
         setTotalPages(data.totalPages || 1);
         
-        // Extract unique categories
         const uniqueCategories = ['All', ...new Set(productsArray.map(p => p.category).filter(Boolean))];
         setCategories(uniqueCategories);
+        
+        // Fetch reviews for all products
+        const reviewsData = {};
+        for (const product of productsArray) {
+          reviewsData[product.id] = await fetchProductReviews(product.id);
+        }
+        setReviews(reviewsData);
       } else {
         setProducts([]);
         setFilteredProducts([]);
@@ -114,10 +135,20 @@ const Shop = () => {
     let filtered = Array.isArray(products) ? [...products] : [];
     
     if (searchTerm) {
+      const searchLower = searchTerm.toLowerCase();
       filtered = filtered.filter(p => 
-        p.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        p.description?.toLowerCase().includes(searchTerm.toLowerCase())
+        p.name?.toLowerCase().includes(searchLower) ||
+        p.description?.toLowerCase().includes(searchLower) ||
+        p.category?.toLowerCase().includes(searchLower) ||
+        p.price?.toString().includes(searchLower)
       );
+    }
+    
+    if (priceRange.min) {
+      filtered = filtered.filter(p => p.price >= parseFloat(priceRange.min));
+    }
+    if (priceRange.max) {
+      filtered = filtered.filter(p => p.price <= parseFloat(priceRange.max));
     }
     
     setFilteredProducts(filtered);
@@ -134,7 +165,11 @@ const Shop = () => {
     try {
       const res = await fetch(`${API_URL}/api/cart/add/${productId}`, {
         method: 'POST',
-        headers: { Authorization: `Bearer ${token}` },
+        headers: { 
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}` 
+        },
+        body: JSON.stringify({ quantity: 1 })
       });
       
       if (res.ok) {
@@ -152,8 +187,7 @@ const Shop = () => {
 
   const handleDeleteProduct = async (e, productId) => {
     e.stopPropagation();
-    const confirmDelete = window.confirm('Are you sure you want to delete this product? This action cannot be undone.');
-    if (!confirmDelete) return;
+    if (!window.confirm('Are you sure you want to delete this product? This action cannot be undone.')) return;
     
     try {
       const res = await fetch(`${API_URL}/api/products/${productId}`, {
@@ -163,7 +197,6 @@ const Shop = () => {
       
       if (res.ok) {
         showToast('Product deleted successfully!', 'success');
-        // Refresh products list
         fetchProducts();
       } else {
         const error = await res.json();
@@ -225,7 +258,7 @@ const Shop = () => {
       if (res.ok) {
         showToast('Product updated successfully!', 'success');
         setEditingProduct(null);
-        fetchProducts(); // Refresh products
+        fetchProducts();
       } else {
         const error = await res.json();
         showToast(error.message || 'Failed to update product', 'error');
@@ -251,47 +284,47 @@ const Shop = () => {
     return currentUser.is_admin || product.user_id === currentUser.id;
   };
 
+  const resetFilters = () => {
+    setSelectedCategory('All');
+    setSearchTerm('');
+    setPriceRange({ min: '', max: '' });
+  };
+
+  const renderStars = (rating) => {
+    const stars = [];
+    const fullStars = Math.floor(rating);
+    const hasHalfStar = rating % 1 >= 0.5;
+    
+    for (let i = 0; i < fullStars; i++) {
+      stars.push(<FaStar key={i} style={styles.starFilled} />);
+    }
+    if (hasHalfStar) {
+      stars.push(<FaStarHalfAlt key="half" style={styles.starFilled} />);
+    }
+    while (stars.length < 5) {
+      stars.push(<FaRegStar key={stars.length} style={styles.starEmpty} />);
+    }
+    return stars;
+  };
+
   const hasProducts = Array.isArray(filteredProducts) && filteredProducts.length > 0;
 
   return (
     <div style={styles.container}>
-      {/* Animated Background Elements */}
-      <div style={styles.backgroundElements}>
-        {floatingElements.map((element) => (
-          <div
-            key={element.id}
-            style={{
-              ...styles.floatingElement,
-              left: `${element.left}%`,
-              fontSize: `${element.size}px`,
-              opacity: element.opacity,
-              animation: `float${(element.id % 5) + 1} ${element.animationDuration}s infinite linear`,
-              animationDelay: `${element.animationDelay}s`
-            }}
-          >
-            {element.icon}
-          </div>
-        ))}
-      </div>
-
-      {/* Main Content */}
       <div style={styles.content}>
-        {/* Hero Section */}
-        <div style={styles.hero}>
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5 }}
-            style={styles.heroContent}
-          >
-            <h1 style={styles.heroTitle}>Shop Our Collection</h1>
-            <p style={styles.heroSubtitle}>Discover amazing products at unbeatable prices</p>
-          </motion.div>
-        </div>
+        {/* Header */}
+        <div style={styles.header}>
+  <div style={styles.light1}></div>
+  <div style={styles.light2}></div>
 
-        {/* Search and Filter Section */}
-        <div style={styles.filterSection}>
-          <div style={styles.searchBar}>
+  <h1 style={styles.title}>Shop Electronics</h1>
+  <p style={styles.subtitle}>Discover the latest tech at great prices</p>
+</div>
+
+
+        {/* Filter Bar */}
+        <div style={styles.filterBar}>
+          <div style={styles.searchWrapper}>
             <FaSearch style={styles.searchIcon} />
             <input
               type="text"
@@ -301,128 +334,168 @@ const Shop = () => {
               style={styles.searchInput}
             />
             {searchTerm && (
-              <button onClick={() => setSearchTerm('')} style={styles.clearButton}>
+              <button onClick={() => setSearchTerm('')} style={styles.clearSearch}>
                 <FaTimes />
               </button>
             )}
           </div>
           
-          <div style={styles.categoryFilter}>
-            <FaFilter style={styles.filterIcon} />
-            <select
-              value={selectedCategory}
-              onChange={(e) => setSelectedCategory(e.target.value)}
-              style={styles.categorySelect}
+          <div style={styles.categoryScroll}>
+            {categories.map(cat => (
+              <button
+                key={cat}
+                onClick={() => setSelectedCategory(cat)}
+                style={{
+                  ...styles.categoryChip,
+                  ...(selectedCategory === cat ? styles.categoryChipActive : {})
+                }}
+              >
+                {categoryIcons[cat]}
+                <span>{cat}</span>
+              </button>
+            ))}
+          </div>
+
+          <div style={styles.filterActions}>
+            <button 
+              onClick={() => setShowPriceFilter(!showPriceFilter)} 
+              style={styles.filterBtn}
             >
-              {categories.map(cat => (
-                <option key={cat} value={cat}>
-                  {cat}
-                </option>
-              ))}
-            </select>
+              <FaSlidersH /> Price
+            </button>
+            {(selectedCategory !== 'All' || searchTerm || priceRange.min || priceRange.max) && (
+              <button onClick={resetFilters} style={styles.resetBtn}>
+                Reset
+              </button>
+            )}
           </div>
         </div>
 
-        {/* Product Count */}
-        <div style={styles.productCount}>
+        {/* Price Filter */}
+        <AnimatePresence>
+          {showPriceFilter && (
+            <motion.div
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: 'auto' }}
+              exit={{ opacity: 0, height: 0 }}
+              style={styles.pricePanel}
+            >
+              <div style={styles.priceRange}>
+                <input
+                  type="number"
+                  placeholder="Min Price"
+                  value={priceRange.min}
+                  onChange={(e) => setPriceRange({ ...priceRange, min: e.target.value })}
+                  style={styles.priceInput}
+                />
+                <span style={styles.priceDash}>—</span>
+                <input
+                  type="number"
+                  placeholder="Max Price"
+                  value={priceRange.max}
+                  onChange={(e) => setPriceRange({ ...priceRange, max: e.target.value })}
+                  style={styles.priceInput}
+                />
+                <button onClick={() => setPriceRange({ min: '', max: '' })} style={styles.clearPrice}>
+                  Clear
+                </button>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* Results Count */}
+        <div style={styles.resultsCount}>
           <span>{filteredProducts.length} products found</span>
         </div>
 
         {/* Products Grid */}
         {isLoading ? (
-          <div style={styles.loadingContainer}>
-            <div style={styles.loadingSpinner}>⏳</div>
-            <p>Loading products...</p>
+          <div style={styles.loading}>
+            <div style={styles.loadingSpinner}></div>
           </div>
         ) : !hasProducts ? (
-          <div style={styles.emptyContainer}>
-            <div style={styles.emptyIcon}>🛍️</div>
+          <div style={styles.empty}>
+            <div style={styles.emptyIcon}>🔍</div>
             <h3>No products found</h3>
-            <p>Try adjusting your search or filter criteria.</p>
-            <button 
-              onClick={() => {
-                setSelectedCategory('All');
-                setSearchTerm('');
-              }}
-              style={styles.resetButton}
-            >
-              Reset Filters
-            </button>
+            <button onClick={resetFilters} style={styles.emptyBtn}>Clear filters</button>
           </div>
         ) : (
           <>
-            <div style={styles.productsGrid}>
-              {filteredProducts.map((product, index) => (
-                <motion.div
-                  key={product.id}
-                  style={styles.productCard}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: index * 0.05 }}
-                  whileHover={{ y: -5 }}
-                  onClick={() => handleProductClick(product.id)}
-                >
-                  <div style={styles.productImageContainer}>
-                    <img
-                      src={product.image_path ? `${API_URL}/uploads/${product.image_path.replace(/^\/+/, '')}` : '/placeholder-image.jpg'}
-                      alt={product.name}
-                      style={styles.productImage}
-                      onError={(e) => {
-                        e.target.src = '/placeholder-image.jpg';
-                      }}
-                    />
-                    {canEditDelete(product) && (
-                      <div style={styles.productActions}>
-                        <button
-                          onClick={(e) => handleEditProduct(e, product)}
-                          style={styles.editButton}
-                          title="Edit Product"
-                        >
-                          <FaEdit />
-                        </button>
-                        <button
-                          onClick={(e) => handleDeleteProduct(e, product.id)}
-                          style={styles.deleteButton}
-                          title="Delete Product"
-                        >
-                          <FaTrash />
+            <div style={styles.grid}>
+              {filteredProducts.map((product) => {
+                const reviewData = reviews[product.id] || { count: 0, average: 0 };
+                return (
+                  <motion.div
+                    key={product.id}
+                    style={styles.card}
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.3 }}
+                    whileHover={{ y: -4 }}
+                    onClick={() => handleProductClick(product.id)}
+                  >
+                    <div style={styles.cardImageContainer}>
+                      <img
+                        src={product.image_path ? `${API_URL}/uploads/${product.image_path.replace(/^\/+/, '')}` : '/placeholder-image.jpg'}
+                        alt={product.name}
+                        style={styles.cardImage}
+                        onError={(e) => { e.target.src = '/placeholder-image.jpg'; }}
+                      />
+                      {canEditDelete(product) && (
+                        <div style={styles.cardActions}>
+  <button
+    onClick={(e) => handleEditProduct(e, product)}
+    style={styles.editAction}
+    title="Edit"
+  >
+    <FaEdit size={12} />
+    <span style={styles.btnText}>Edit</span>
+  </button>
+
+  <button
+    onClick={(e) => handleDeleteProduct(e, product.id)}
+    style={styles.deleteAction}
+    title="Delete"
+  >
+    <FaTrash size={12} />
+    <span style={styles.btnText}>Delete</span>
+  </button>
+</div>
+
+                      )}
+                    </div>
+                    <div style={styles.cardInfo}>
+                      <h3 style={styles.cardTitle}>{product.name}</h3>
+                      <div style={styles.cardCategory}>
+                        {categoryIcons[product.category] || <FaBolt size={10} />}
+                        <span>{product.category || 'Electronics'}</span>
+                      </div>
+                      <div style={styles.cardRating}>
+                        {renderStars(reviewData.average)}
+                        <span>({reviewData.count} {reviewData.count === 1 ? 'review' : 'reviews'})</span>
+                      </div>
+                      <div style={styles.cardFooter}>
+                        <span style={styles.cardPrice}>KES {product.price?.toLocaleString()}</span>
+                        <button onClick={(e) => addToCart(e, product.id)} style={styles.cardCart}>
+                          <FaShoppingCart size={11} /> Buy
                         </button>
                       </div>
-                    )}
-                  </div>
-                  <div style={styles.productInfo}>
-                    <h3 style={styles.productName}>{product.name}</h3>
-                    <p style={styles.productCategory}>{product.category || 'Uncategorized'}</p>
-                    <div style={styles.productRating}>
-                      {[...Array(5)].map((_, i) => (
-                        <FaStar key={i} style={{ color: '#ffc107', fontSize: '12px' }} />
-                      ))}
                     </div>
-                    <div style={styles.productFooter}>
-                      <p style={styles.productPrice}>
-                        KES {product.price ? product.price.toLocaleString() : '0'}
-                      </p>
-                      <button
-                        onClick={(e) => addToCart(e, product.id)}
-                        style={styles.addToCartButton}
-                      >
-                        <FaShoppingCart />
-                      </button>
-                    </div>
-                  </div>
-                </motion.div>
-              ))}
+                  </motion.div>
+                );
+              })}
             </div>
 
             {/* Pagination */}
             {totalPages > 1 && (
               <div style={styles.pagination}>
-                <button
-                  onClick={() => handlePageChange(currentPage - 1)}
-                  disabled={currentPage === 1}
-                  style={{ ...styles.pageButton, ...(currentPage === 1 ? styles.disabledButton : {}) }}
+                <button 
+                  onClick={() => handlePageChange(currentPage - 1)} 
+                  disabled={currentPage === 1} 
+                  style={{ ...styles.pageBtn, ...(currentPage === 1 ? styles.pageDisabled : {}) }}
                 >
-                  Previous
+                  ← Prev
                 </button>
                 <div style={styles.pageNumbers}>
                   {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
@@ -438,7 +511,7 @@ const Shop = () => {
                         onClick={() => handlePageChange(pageNum)}
                         style={{
                           ...styles.pageNumber,
-                          ...(currentPage === pageNum ? styles.activePage : {})
+                          ...(currentPage === pageNum ? styles.pageActive : {})
                         }}
                       >
                         {pageNum}
@@ -446,12 +519,12 @@ const Shop = () => {
                     );
                   })}
                 </div>
-                <button
-                  onClick={() => handlePageChange(currentPage + 1)}
-                  disabled={currentPage === totalPages}
-                  style={{ ...styles.pageButton, ...(currentPage === totalPages ? styles.disabledButton : {}) }}
+                <button 
+                  onClick={() => handlePageChange(currentPage + 1)} 
+                  disabled={currentPage === totalPages} 
+                  style={{ ...styles.pageBtn, ...(currentPage === totalPages ? styles.pageDisabled : {}) }}
                 >
-                  Next
+                  Next →
                 </button>
               </div>
             )}
@@ -459,100 +532,39 @@ const Shop = () => {
         )}
       </div>
 
-      {/* Edit Product Modal */}
+      {/* Edit Modal */}
       <AnimatePresence>
         {editingProduct && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            style={styles.modalOverlay}
-            onClick={() => setEditingProduct(null)}
-          >
-            <motion.div
-              initial={{ scale: 0.9, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0.9, opacity: 0 }}
-              style={styles.modalContent}
-              onClick={(e) => e.stopPropagation()}
-            >
+          <div style={styles.modalOverlay} onClick={() => setEditingProduct(null)}>
+            <div style={styles.modal} onClick={(e) => e.stopPropagation()}>
               <div style={styles.modalHeader}>
                 <h2>Edit Product</h2>
-                <button onClick={() => setEditingProduct(null)} style={styles.closeButton}>✕</button>
+                <button onClick={() => setEditingProduct(null)} style={styles.modalClose}>✕</button>
               </div>
               <form onSubmit={handleEditSubmit}>
-                <div style={styles.formGroup}>
-                  <label>Product Name *</label>
-                  <input
-                    type="text"
-                    name="name"
-                    value={editFormData.name}
-                    onChange={(e) => setEditFormData({...editFormData, name: e.target.value})}
-                    required
-                    style={styles.formInput}
-                  />
-                </div>
-                <div style={styles.formGroup}>
-                  <label>Description</label>
-                  <textarea
-                    name="description"
-                    value={editFormData.description}
-                    onChange={(e) => setEditFormData({...editFormData, description: e.target.value})}
-                    rows="4"
-                    style={styles.formTextarea}
-                  />
-                </div>
-                <div style={styles.formGroup}>
-                  <label>Price *</label>
-                  <input
-                    type="number"
-                    name="price"
-                    value={editFormData.price}
-                    onChange={(e) => setEditFormData({...editFormData, price: e.target.value})}
-                    required
-                    step="0.01"
-                    style={styles.formInput}
-                  />
-                </div>
-                <div style={styles.formGroup}>
-                  <label>Category</label>
-                  <input
-                    type="text"
-                    name="category"
-                    value={editFormData.category}
-                    onChange={(e) => setEditFormData({...editFormData, category: e.target.value})}
-                    style={styles.formInput}
-                  />
-                </div>
-                <div style={styles.formGroup}>
-                  <label>Update Images (Optional)</label>
-                  <input
-                    type="file"
-                    accept="image/*"
-                    multiple
-                    onChange={(e) => {
-                      const files = Array.from(e.target.files);
-                      setEditImages(files);
-                      const previews = files.map(file => URL.createObjectURL(file));
-                      setEditImagePreviews(previews);
-                    }}
-                    style={styles.fileInput}
-                  />
-                  {editImagePreviews.length > 0 && (
-                    <div style={styles.imagePreviewContainer}>
-                      {editImagePreviews.map((preview, index) => (
-                        <img key={index} src={preview} alt="Preview" style={styles.imagePreview} />
-                      ))}
-                    </div>
-                  )}
-                </div>
+                <input type="text" placeholder="Product Name" value={editFormData.name} onChange={(e) => setEditFormData({...editFormData, name: e.target.value})} required style={styles.modalInput} />
+                <textarea placeholder="Description" value={editFormData.description} onChange={(e) => setEditFormData({...editFormData, description: e.target.value})} rows="3" style={styles.modalTextarea} />
+                <input type="number" placeholder="Price" value={editFormData.price} onChange={(e) => setEditFormData({...editFormData, price: e.target.value})} required step="0.01" style={styles.modalInput} />
+                <input type="text" placeholder="Category" value={editFormData.category} onChange={(e) => setEditFormData({...editFormData, category: e.target.value})} style={styles.modalInput} />
+                <input type="file" accept="image/*" multiple onChange={(e) => {
+                  const files = Array.from(e.target.files);
+                  setEditImages(files);
+                  setEditImagePreviews(files.map(file => URL.createObjectURL(file)));
+                }} style={styles.modalFile} />
+                {editImagePreviews.length > 0 && (
+                  <div style={styles.modalPreviews}>
+                    {editImagePreviews.map((preview, idx) => (
+                      <img key={idx} src={preview} alt="Preview" style={styles.modalPreview} />
+                    ))}
+                  </div>
+                )}
                 <div style={styles.modalActions}>
-                  <button type="submit" style={styles.saveButton}>Save Changes</button>
-                  <button type="button" onClick={() => setEditingProduct(null)} style={styles.cancelButton}>Cancel</button>
+                  <button type="submit" style={styles.modalSave}>Save Changes</button>
+                  <button type="button" onClick={() => setEditingProduct(null)} style={styles.modalCancel}>Cancel</button>
                 </div>
               </form>
-            </motion.div>
-          </motion.div>
+            </div>
+          </div>
         )}
       </AnimatePresence>
     </div>
@@ -562,67 +574,53 @@ const Shop = () => {
 const styles = {
   container: {
     minHeight: '100vh',
-    background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-    position: 'relative',
-    overflow: 'hidden',
-    fontFamily: "'Poppins', 'Segoe UI', sans-serif"
-  },
-  backgroundElements: {
-    position: 'absolute',
-    width: '100%',
-    height: '100%',
-    pointerEvents: 'none',
-    overflow: 'hidden'
-  },
-  floatingElement: {
-    position: 'absolute',
-    pointerEvents: 'none',
-    userSelect: 'none'
+    background: '#ffffff',
+    fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif"
   },
   content: {
-    position: 'relative',
-    zIndex: 1,
-    padding: '80px 20px 40px',
-    maxWidth: '1200px',
-    margin: '0 auto'
+    maxWidth: '1400px',
+    margin: '0 auto',
+    padding: '80px 24px 48px'
   },
-  hero: {
-    textAlign: 'center',
-    marginBottom: '30px'
-  },
-  heroContent: {
-    background: 'rgba(255,255,255,0.95)',
-    borderRadius: '15px',
-    padding: '25px',
-    boxShadow: '0 5px 15px rgba(0,0,0,0.1)'
-  },
-  heroTitle: {
-    fontSize: '32px',
-    fontWeight: 'bold',
-    background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-    WebkitBackgroundClip: 'text',
-    WebkitTextFillColor: 'transparent',
-    marginBottom: '10px'
-  },
-  heroSubtitle: {
-    fontSize: '14px',
-    color: '#666'
-  },
-  filterSection: {
-    display: 'flex',
-    gap: '15px',
+  header: {
+  textAlign: 'center',
+  padding: '40px 20px',
+  position: 'relative',
+  overflow: 'hidden'
+},
+
+title: {
+  fontSize: '2.5rem',
+  fontWeight: '300', // ✅ thin font
+  letterSpacing: '1px',
+  color: '#ffffff',
+  marginBottom: '10px',
+  textShadow: '0 0 10px rgba(102,126,234,0.6), 0 0 20px rgba(102,126,234,0.4)',
+  animation: 'glowPulse 2s ease-in-out infinite alternate'
+},
+
+subtitle: {
+  fontSize: '1rem',
+  fontWeight: '300',
+  color: '#ccc',
+  letterSpacing: '0.5px',
+  animation: 'fadeInUp 1.5s ease'
+},
+
+  filterBar: {
+    background: '#f8f9fa',
+    borderRadius: '16px',
+    padding: '16px 20px',
     marginBottom: '20px',
-    flexWrap: 'wrap',
-    justifyContent: 'center'
+    border: '1px solid #e9ecef'
   },
-  searchBar: {
-    flex: 1,
+  searchWrapper: {
     position: 'relative',
-    maxWidth: '400px'
+    marginBottom: '16px'
   },
   searchIcon: {
     position: 'absolute',
-    left: '12px',
+    left: '14px',
     top: '50%',
     transform: 'translateY(-50%)',
     color: '#999',
@@ -630,242 +628,338 @@ const styles = {
   },
   searchInput: {
     width: '100%',
-    padding: '10px 35px 10px 38px',
-    border: '2px solid #e0e0e0',
-    borderRadius: '8px',
+    padding: '10px 40px 10px 42px',
+    background: '#ffffff',
+    border: '1px solid #dee2e6',
+    borderRadius: '40px',
     fontSize: '14px',
+    color: '#1a1a2e',
     outline: 'none',
-    transition: 'all 0.3s ease',
-    fontFamily: "'Poppins', 'Segoe UI', sans-serif"
+    transition: 'all 0.2s',
+    '&:focus': {
+      borderColor: '#667eea',
+      boxShadow: '0 0 0 3px rgba(102,126,234,0.1)'
+    }
   },
-  clearButton: {
+  clearSearch: {
     position: 'absolute',
-    right: '12px',
+    right: '14px',
     top: '50%',
     transform: 'translateY(-50%)',
     background: 'none',
     border: 'none',
+    color: '#999',
+    cursor: 'pointer'
+  },
+  categoryScroll: {
+    display: 'flex',
+    gap: '8px',
+    overflowX: 'auto',
+    paddingBottom: '8px',
+    marginBottom: '16px',
+    scrollbarWidth: 'thin'
+  },
+  categoryChip: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '6px',
+    padding: '6px 14px',
+    background: '#ffffff',
+    border: '1px solid #dee2e6',
+    borderRadius: '40px',
+    fontSize: '13px',
+    fontWeight: '500',
+    color: '#4a5568',
     cursor: 'pointer',
-    color: '#999',
-    fontSize: '12px'
+    transition: 'all 0.2s',
+    whiteSpace: 'nowrap',
+    '&:hover': {
+      borderColor: '#667eea',
+      color: '#667eea'
+    }
   },
-  categoryFilter: {
-    position: 'relative',
-    minWidth: '160px'
+  categoryChipActive: {
+    background: '#667eea',
+    borderColor: '#667eea',
+    color: '#ffffff'
   },
-  filterIcon: {
-    position: 'absolute',
-    left: '12px',
-    top: '50%',
-    transform: 'translateY(-50%)',
-    color: '#999',
-    fontSize: '14px',
-    zIndex: 1
+  filterActions: {
+    display: 'flex',
+    gap: '10px'
   },
-  categorySelect: {
-    width: '100%',
-    padding: '10px 12px 10px 38px',
-    border: '2px solid #e0e0e0',
+  filterBtn: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '6px',
+    padding: '6px 14px',
+    background: '#ffffff',
+    border: '1px solid #dee2e6',
+    borderRadius: '40px',
+    fontSize: '13px',
+    fontWeight: '500',
+    color: '#4a5568',
+    cursor: 'pointer',
+    transition: 'all 0.2s'
+  },
+  resetBtn: {
+    padding: '6px 14px',
+    background: '#ffffff',
+    border: '1px solid #dee2e6',
+    borderRadius: '40px',
+    fontSize: '13px',
+    fontWeight: '500',
+    color: '#dc3545',
+    cursor: 'pointer',
+    transition: 'all 0.2s'
+  },
+  pricePanel: {
+    background: '#f8f9fa',
+    borderRadius: '12px',
+    padding: '12px 16px',
+    marginBottom: '20px',
+    border: '1px solid #e9ecef'
+  },
+  priceRange: {
+    display: 'flex',
+    gap: '10px',
+    alignItems: 'center',
+    justifyContent: 'center',
+    flexWrap: 'wrap'
+  },
+  priceInput: {
+    width: '110px',
+    padding: '8px 10px',
+    background: '#ffffff',
+    border: '1px solid #dee2e6',
     borderRadius: '8px',
-    fontSize: '14px',
-    background: 'white',
-    cursor: 'pointer',
-    outline: 'none',
-    fontFamily: "'Poppins', 'Segoe UI', sans-serif"
+    fontSize: '13px',
+    color: '#1a1a2e',
+    outline: 'none'
   },
-  productCount: {
+  priceDash: {
+    color: '#999'
+  },
+  clearPrice: {
+    padding: '8px 14px',
+    background: '#ffffff',
+    border: '1px solid #dee2e6',
+    borderRadius: '8px',
+    fontSize: '12px',
+    color: '#666',
+    cursor: 'pointer'
+  },
+  resultsCount: {
     textAlign: 'center',
     marginBottom: '20px',
-    padding: '8px',
-    background: 'rgba(255,255,255,0.95)',
-    borderRadius: '8px',
     fontSize: '13px',
     color: '#666'
   },
-  productsGrid: {
+  grid: {
     display: 'grid',
-    gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))',
-    gap: '20px',
-    marginBottom: '30px'
+    gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))',
+    gap: '24px',
+    marginBottom: '40px'
   },
-  productCard: {
-    background: 'white',
+  card: {
+    background: '#ffffff',
     borderRadius: '12px',
     overflow: 'hidden',
-    boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
-    transition: 'all 0.3s ease',
+    transition: 'all 0.2s',
     cursor: 'pointer',
-    position: 'relative'
+    border: '1px solid #e9ecef',
+    boxShadow: '0 1px 3px rgba(0,0,0,0.05)'
   },
-  productImageContainer: {
+  cardImageContainer: {
     position: 'relative',
-    height: '180px',
-    overflow: 'hidden',
-    backgroundColor: '#f5f5f5',
+    width: '100%',
+    height: '200px',
+    background: '#f8f9fa',
     display: 'flex',
     alignItems: 'center',
-    justifyContent: 'center'
+    justifyContent: 'center',
+    overflow: 'hidden'
   },
-  productImage: {
+  cardImage: {
     width: '100%',
     height: '100%',
-    objectFit: 'cover',
+    objectFit: 'contain',
+    padding: '16px',
     transition: 'transform 0.3s ease'
   },
-  productActions: {
+  cardActions: {
     position: 'absolute',
-    top: '8px',
-    right: '8px',
+    top: '10px',
+    right: '10px',
     display: 'flex',
-    gap: '8px',
+    gap: '6px',
     zIndex: 2
   },
-  editButton: {
-    background: 'rgba(102, 126, 234, 0.9)',
+  editAction: {
+    background: '#667eea',
     color: 'white',
     border: 'none',
     borderRadius: '6px',
-    width: '32px',
-    height: '32px',
+    width: '28px',
+    height: '28px',
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
     cursor: 'pointer',
-    transition: 'all 0.2s ease'
+    transition: 'transform 0.2s'
   },
-  deleteButton: {
-    background: 'rgba(220, 53, 69, 0.9)',
+  deleteAction: {
+    background: '#ef4444',
     color: 'white',
     border: 'none',
     borderRadius: '6px',
-    width: '32px',
-    height: '32px',
+    width: '28px',
+    height: '28px',
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
     cursor: 'pointer',
-    transition: 'all 0.2s ease'
+    transition: 'transform 0.2s'
   },
-  productInfo: {
+  cardInfo: {
     padding: '12px'
   },
-  productName: {
+  cardTitle: {
     fontSize: '14px',
     fontWeight: '600',
-    marginBottom: '5px',
-    color: '#333',
+    marginBottom: '4px',
+    color: '#1a1a2e',
     whiteSpace: 'nowrap',
     overflow: 'hidden',
     textOverflow: 'ellipsis'
   },
-  productCategory: {
-    fontSize: '11px',
-    color: '#999',
-    marginBottom: '8px'
-  },
-  productRating: {
+  cardCategory: {
     display: 'flex',
-    gap: '3px',
-    marginBottom: '10px'
+    alignItems: 'center',
+    gap: '5px',
+    fontSize: '11px',
+    color: '#667eea',
+    marginBottom: '6px'
   },
-  productFooter: {
+  cardRating: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '6px',
+    marginBottom: '10px',
+    fontSize: '11px',
+    color: '#666'
+  },
+  starFilled: {
+    color: '#fbbf24',
+    fontSize: '10px'
+  },
+  starEmpty: {
+    color: '#e5e7eb',
+    fontSize: '10px'
+  },
+  cardFooter: {
     display: 'flex',
     justifyContent: 'space-between',
     alignItems: 'center'
   },
-  productPrice: {
-    fontSize: '16px',
-    color: '#667eea',
-    fontWeight: 'bold'
+  cardPrice: {
+    fontSize: '15px',
+    fontWeight: '700',
+    color: '#667eea'
   },
-  addToCartButton: {
+  cardCart: {
     display: 'flex',
     alignItems: 'center',
-    justifyContent: 'center',
-    padding: '6px',
-    background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-    color: 'white',
-    border: 'none',
-    borderRadius: '6px',
+    gap: '5px',
+    padding: '5px 10px',
+    background: '#f8f9fa',
+    color: '#667eea',
+    border: '1px solid #e9ecef',
+    borderRadius: '20px',
+    fontSize: '11px',
+    fontWeight: '500',
     cursor: 'pointer',
-    transition: 'transform 0.2s ease',
-    width: '32px',
-    height: '32px'
+    transition: 'all 0.2s',
+    '&:hover': {
+      background: '#667eea',
+      color: 'white',
+      borderColor: '#667eea'
+    }
   },
   pagination: {
     display: 'flex',
     justifyContent: 'center',
     alignItems: 'center',
-    gap: '8px',
-    marginTop: '20px'
+    gap: '12px'
   },
-  pageButton: {
-    padding: '8px 16px',
-    background: 'white',
-    border: '2px solid #e0e0e0',
+  pageBtn: {
+    padding: '6px 14px',
+    background: '#ffffff',
+    border: '1px solid #dee2e6',
     borderRadius: '8px',
+    color: '#4a5568',
     cursor: 'pointer',
-    transition: 'all 0.2s ease',
-    fontFamily: "'Poppins', 'Segoe UI', sans-serif",
-    fontSize: '13px'
+    fontSize: '13px',
+    transition: 'all 0.2s'
+  },
+  pageDisabled: {
+    opacity: 0.5,
+    cursor: 'not-allowed'
   },
   pageNumbers: {
     display: 'flex',
     gap: '6px'
   },
   pageNumber: {
-    width: '35px',
-    height: '35px',
+    width: '32px',
+    height: '32px',
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
-    background: 'white',
-    border: '2px solid #e0e0e0',
-    borderRadius: '6px',
+    background: '#ffffff',
+    border: '1px solid #dee2e6',
+    borderRadius: '8px',
+    color: '#4a5568',
     cursor: 'pointer',
-    transition: 'all 0.2s ease',
-    fontFamily: "'Poppins', 'Segoe UI', sans-serif",
-    fontSize: '13px'
+    fontSize: '13px',
+    transition: 'all 0.2s'
   },
-  activePage: {
-    background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+  pageActive: {
+    background: '#667eea',
     color: 'white',
-    borderColor: 'transparent'
+    borderColor: '#667eea'
   },
-  disabledButton: {
-    opacity: 0.5,
-    cursor: 'not-allowed'
-  },
-  loadingContainer: {
-    textAlign: 'center',
-    padding: '40px',
-    background: 'rgba(255,255,255,0.95)',
-    borderRadius: '15px'
+  loading: {
+    display: 'flex',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: '60px'
   },
   loadingSpinner: {
-    fontSize: '30px',
-    animation: 'spin 1s linear infinite',
-    display: 'inline-block'
+    width: '36px',
+    height: '36px',
+    border: '3px solid #e9ecef',
+    borderTopColor: '#667eea',
+    borderRadius: '50%',
+    animation: 'spin 1s linear infinite'
   },
-  emptyContainer: {
+  empty: {
     textAlign: 'center',
-    padding: '40px',
-    background: 'rgba(255,255,255,0.95)',
-    borderRadius: '15px'
+    padding: '60px',
+    background: '#f8f9fa',
+    borderRadius: '12px'
   },
   emptyIcon: {
-    fontSize: '40px',
-    marginBottom: '15px'
+    fontSize: '48px',
+    marginBottom: '16px'
   },
-  resetButton: {
-    marginTop: '15px',
+  emptyBtn: {
+    marginTop: '16px',
     padding: '8px 20px',
-    background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+    background: '#667eea',
     color: 'white',
     border: 'none',
-    borderRadius: '6px',
+    borderRadius: '20px',
     cursor: 'pointer',
-    fontFamily: "'Poppins', 'Segoe UI', sans-serif",
     fontSize: '13px'
   },
   modalOverlay: {
@@ -874,21 +968,20 @@ const styles = {
     left: 0,
     right: 0,
     bottom: 0,
-    background: 'rgba(0,0,0,0.7)',
+    background: 'rgba(0,0,0,0.5)',
     zIndex: 1000,
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
     padding: '20px'
   },
-  modalContent: {
-    background: 'white',
-    borderRadius: '20px',
-    maxWidth: '600px',
+  modal: {
+    background: '#ffffff',
+    borderRadius: '16px',
+    maxWidth: '480px',
     width: '100%',
-    maxHeight: '90vh',
-    overflow: 'auto',
-    padding: '30px'
+    padding: '24px',
+    boxShadow: '0 20px 60px rgba(0,0,0,0.15)'
   },
   modalHeader: {
     display: 'flex',
@@ -896,116 +989,163 @@ const styles = {
     alignItems: 'center',
     marginBottom: '20px'
   },
-  closeButton: {
+  modalClose: {
     background: 'none',
     border: 'none',
-    fontSize: '24px',
-    cursor: 'pointer',
-    color: '#999'
+    fontSize: '20px',
+    color: '#999',
+    cursor: 'pointer'
   },
-  formGroup: {
-    marginBottom: '15px'
-  },
-  formInput: {
+  modalInput: {
     width: '100%',
-    padding: '10px',
-    border: '1px solid #e0e0e0',
+    padding: '10px 12px',
+    background: '#f8f9fa',
+    border: '1px solid #dee2e6',
     borderRadius: '8px',
+    marginBottom: '12px',
     fontSize: '14px',
-    fontFamily: "'Poppins', 'Segoe UI', sans-serif"
+    color: '#1a1a2e'
   },
-  formTextarea: {
+  modalTextarea: {
     width: '100%',
-    padding: '10px',
-    border: '1px solid #e0e0e0',
+    padding: '10px 12px',
+    background: '#f8f9fa',
+    border: '1px solid #dee2e6',
     borderRadius: '8px',
+    marginBottom: '12px',
     fontSize: '14px',
-    fontFamily: "'Poppins', 'Segoe UI', sans-serif",
+    color: '#1a1a2e',
     resize: 'vertical'
   },
-  fileInput: {
+  modalFile: {
     width: '100%',
-    padding: '8px',
-    border: '1px solid #e0e0e0',
+    padding: '10px',
+    background: '#f8f9fa',
+    border: '1px solid #dee2e6',
     borderRadius: '8px',
-    fontSize: '14px'
+    marginBottom: '12px',
+    fontSize: '13px'
   },
-  imagePreviewContainer: {
+  modalPreviews: {
     display: 'flex',
     gap: '8px',
-    marginTop: '10px',
+    marginBottom: '20px',
     flexWrap: 'wrap'
   },
-  imagePreview: {
-    width: '60px',
-    height: '60px',
+  modalPreview: {
+    width: '50px',
+    height: '50px',
     objectFit: 'cover',
-    borderRadius: '8px'
+    borderRadius: '6px'
   },
+  btnText: {
+  marginLeft: '3px',
+  fontSize: '10px'
+},
+
   modalActions: {
     display: 'flex',
-    gap: '10px',
-    marginTop: '20px'
+    gap: '12px'
   },
-  saveButton: {
+  modalSave: {
     flex: 1,
     padding: '10px',
-    background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+    background: '#667eea',
     color: 'white',
     border: 'none',
     borderRadius: '8px',
     cursor: 'pointer',
-    fontWeight: '500'
+    fontWeight: '500',
+    fontSize: '14px'
   },
-  adminActions: {
-  display: 'flex',
-  gap: '12px',
-  marginTop: '15px',
-  paddingTop: '15px',
-  borderTop: '1px solid #e0e0e0'
-},
-editButton: {
-  flex: 1,
-  display: 'flex',
-  alignItems: 'center',
-  justifyContent: 'center',
-  gap: '8px',
-  padding: '10px',
-  background: '#667eea',
-  color: 'white',
-  border: 'none',
-  borderRadius: '8px',
-  cursor: 'pointer',
-  fontSize: '14px',
-  fontWeight: '500',
-  transition: 'all 0.2s ease'
-},
-deleteButton: {
-  flex: 1,
-  display: 'flex',
-  alignItems: 'center',
-  justifyContent: 'center',
-  gap: '8px',
-  padding: '10px',
-  background: '#dc3545',
-  color: 'white',
-  border: 'none',
-  borderRadius: '8px',
-  cursor: 'pointer',
-  fontSize: '14px',
-  fontWeight: '500',
-  transition: 'all 0.2s ease'
-},
-  cancelButton: {
+  modalCancel: {
     flex: 1,
     padding: '10px',
-    background: '#f5f5f5',
-    color: '#666',
-    border: '1px solid #e0e0e0',
+    background: '#f8f9fa',
+    border: '1px solid #dee2e6',
     borderRadius: '8px',
+    color: '#666',
     cursor: 'pointer',
-    fontWeight: '500'
-  }
+    fontSize: '14px'
+  },light1: {
+  position: 'absolute',
+  top: '-50px',
+  left: '-50px',
+  width: '200px',
+  height: '200px',
+  background: 'rgba(102,126,234,0.4)',
+  filter: 'blur(100px)',
+  borderRadius: '50%',
+  animation: 'floatLight 6s ease-in-out infinite'
+},
+
+light2: {
+  position: 'absolute',
+  bottom: '-50px',
+  right: '-50px',
+  width: '200px',
+  height: '200px',
+  background: 'rgba(118,75,162,0.4)',
+  filter: 'blur(100px)',
+  borderRadius: '50%',
+  animation: 'floatLight 8s ease-in-out infinite'
+},
+
 };
+
+// Add keyframes
+const styleSheet = document.createElement("style");
+styleSheet.textContent = `
+  @keyframes spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+  }
+  .category-scroll::-webkit-scrollbar {
+    height: 4px;
+  }
+  .category-scroll::-webkit-scrollbar-track {
+    background: #e9ecef;
+    border-radius: 4px;
+  }
+  .category-scroll::-webkit-scrollbar-thumb {
+    background: #cbd5e1;
+    border-radius: 4px;
+  }
+  .card-image-container:hover img {
+    transform: scale(1.05);
+  }
+    @keyframes glowPulse {
+  from {
+    text-shadow: 0 0 10px rgba(102,126,234,0.6),
+                 0 0 20px rgba(102,126,234,0.4);
+  }
+  to {
+    text-shadow: 0 0 20px rgba(118,75,162,0.8),
+                 0 0 40px rgba(118,75,162,0.6);
+  }
+}
+
+@keyframes floatLight {
+  0%, 100% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(20px);
+  }
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+`;
+document.head.appendChild(styleSheet);
 
 export default Shop;

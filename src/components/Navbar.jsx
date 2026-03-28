@@ -208,7 +208,7 @@ const DesktopNavLinks = ({ currentUser, handleLogout, darkMode, cartCount, notif
           <NavLinkItem path="/upload" icon={<FaUpload />} label="Sell" darkMode={darkMode} />
         )}
         <NavLinkItem path="/cart" icon={<FaShoppingCart />} label="Cart" darkMode={darkMode} count={cartCount} />
-        <NavLinkItem path="/notifications" icon={<FaBell />} label="Alerts" darkMode={darkMode} count={notificationCount} />
+        <NavLinkItem path="/orders" icon={<FaBell />} label="Orders" darkMode={darkMode} count={notificationCount} />
         <ProfileDropdown currentUser={currentUser} handleLogout={handleLogout} darkMode={darkMode} />
       </>
     ) : (

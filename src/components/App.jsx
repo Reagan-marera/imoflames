@@ -9,7 +9,7 @@ import PaymentForm from './PaymentForm';
 import Navbar from './Navbar';
 import AdminDashboard from './AdminDashboard';
 import NotFound from './NotFound';
-import CartPage from './CartPage';
+import CartPage from './Cart';
 import ContactUsForm from './Contact Us';
 import './App.css';
 import './global.css';
@@ -22,6 +22,7 @@ import Notifications from './Notifications';
 import Profile from './Profile'
 import Orders from './Orders';
 import OderForm from './OrderForm'
+import Checkout from './Checkout'
 
 function App() {
   return (
@@ -32,6 +33,7 @@ function App() {
           <Routes>
             <Route path="/" element={<Home />} />
             <Route path="/notifications" element={<Notifications />} />
+            <Route path="/checkout" element={<Checkout />} />
             <Route path="/profile" element={<Profile />} />
             <Route path="/orders" element={<Orders />} />
             <Route path="/contact-us" element={<ContactUsForm />} />

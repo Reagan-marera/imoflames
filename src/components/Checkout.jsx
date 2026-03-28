@@ -1,4 +1,4 @@
-// OrderForm.js - With M-Pesa STK Push and Cash on Delivery options
+// Checkout.jsx - Fixed navigation issue
 import React, { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
@@ -9,12 +9,12 @@ import {
 import { API_URL } from '../config';
 import { showToast } from './utils';
 
-const OrderForm = () => {
+const Checkout = () => {
   const location = useLocation();
   const navigate = useNavigate();
-  const { product, quantity, price, total } = location.state || {};
+  const { items = [], total = 0 } = location.state || {};
   const token = localStorage.getItem('token');
-
+  
   const [formData, setFormData] = useState({
     phone_number: '',
     email: '',
@@ -27,9 +27,9 @@ const OrderForm = () => {
   const [floatingElements, setFloatingElements] = useState([]);
 
   useEffect(() => {
-    // Check if product exists, redirect if not
-    if (!product) {
-      navigate('/shop');
+    // Check if cart is empty and redirect
+    if (!items || items.length === 0) {
+      navigate('/cart');
       return;
     }
     
@@ -38,7 +38,7 @@ const OrderForm = () => {
     if (user.email) {
       setFormData(prev => ({ ...prev, email: user.email }));
     }
-  }, [product, navigate]);
+  }, [items, navigate]); // Add dependencies
 
   // Create floating animation elements
   useEffect(() => {
@@ -58,9 +58,14 @@ const OrderForm = () => {
     setFloatingElements(newFloatingElements);
   }, []);
 
-  if (!product) {
+  // If no items, don't render (will redirect via useEffect)
+  if (!items || items.length === 0) {
     return null;
   }
+
+  const subtotal = total;
+  const shipping = subtotal > 5000 ? 0 : 150;
+  const grandTotal = subtotal + shipping;
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -71,13 +76,6 @@ const OrderForm = () => {
     setPaymentProcessing(true);
     
     try {
-      // Format items for the order
-      const orderItems = [{
-        product_id: product.id,
-        quantity: quantity,
-        price: price
-      }];
-      
       const response = await fetch(`${API_URL}/api/mpesa/stkpush`, {
         method: 'POST',
         headers: {
@@ -86,9 +84,9 @@ const OrderForm = () => {
         },
         body: JSON.stringify({
           phone_number: formData.phone_number,
-          amount: total,
+          amount: grandTotal,
           order_data: {
-            items: orderItems,
+            items,
             delivery_details: {
               location: formData.location,
               delivery_notes: formData.delivery_notes,
@@ -144,12 +142,11 @@ const OrderForm = () => {
     setPaymentProcessing(true);
     
     try {
-      // Format items array for the backend
-      const orderItems = [{
-        product_id: product.id,
-        quantity: quantity,
-        price: price
-      }];
+      const orderItems = items.map(item => ({
+        product_id: item.product?.id || item.id,
+        quantity: item.quantity,
+        price: item.product?.price || item.price
+      }));
       
       const response = await fetch(`${API_URL}/api/orders`, {
         method: 'POST',
@@ -159,7 +156,7 @@ const OrderForm = () => {
         },
         body: JSON.stringify({
           items: orderItems,
-          total_amount: total,
+          total_amount: grandTotal,
           phone_number: formData.phone_number,
           email: formData.email,
           location: formData.location,
@@ -172,6 +169,12 @@ const OrderForm = () => {
       
       if (response.ok) {
         showToast('Order placed successfully! You will pay upon delivery.', 'success');
+        // Send email notification
+        await fetch(`${API_URL}/api/send-order-email`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ order_id: data.order.id, email: formData.email })
+        });
         navigate('/orders');
       } else {
         showToast(data.message || 'Failed to place order', 'error');
@@ -206,10 +209,6 @@ const OrderForm = () => {
     }
   };
 
-  const subtotal = total;
-  const shipping = subtotal > 5000 ? 0 : 150;
-  const grandTotal = subtotal + shipping;
-
   return (
     <div style={styles.container}>
       {/* Animated Background Elements */}
@@ -232,28 +231,31 @@ const OrderForm = () => {
       </div>
 
       <div style={styles.content}>
-        <button onClick={() => navigate(-1)} style={styles.backButton}>
-          <FaArrowLeft /> Back
+        <button onClick={() => navigate('/cart')} style={styles.backButton}>
+          <FaArrowLeft /> Back to Cart
         </button>
 
         <div style={styles.checkoutGrid}>
           {/* Order Summary */}
           <div style={styles.orderSummary}>
             <h2 style={styles.summaryTitle}>Order Summary</h2>
-            
-            <div style={styles.productCard}>
-              <img 
-                src={product.image_path ? `${API_URL}/uploads/${product.image_path.replace(/^\/+/, '')}` : '/placeholder-image.jpg'} 
-                alt={product.name} 
-                style={styles.productImage}
-                onError={(e) => e.target.src = '/placeholder-image.jpg'}
-              />
-              <div style={styles.productDetails}>
-                <h3 style={styles.productName}>{product.name}</h3>
-                <p style={styles.productCategory}>{product.category || 'Uncategorized'}</p>
-                <p style={styles.productQuantity}>Quantity: {quantity}</p>
-                <p style={styles.productPrice}>KES {price?.toLocaleString()}</p>
-              </div>
+            <div style={styles.itemsList}>
+              {items.map((item, index) => (
+                <div key={index} style={styles.summaryItem}>
+                  <img 
+                    src={item.product?.image_path ? `${API_URL}/uploads/${item.product.image_path.replace(/^\/+/, '')}` : '/placeholder-image.jpg'}
+                    alt={item.product?.name}
+                    style={styles.summaryImage}
+                  />
+                  <div style={styles.summaryDetails}>
+                    <p style={styles.summaryName}>{item.product?.name}</p>
+                    <p style={styles.summaryMeta}>Qty: {item.quantity}</p>
+                  </div>
+                  <p style={styles.summaryPrice}>
+                    KES {(item.product?.price * item.quantity).toLocaleString()}
+                  </p>
+                </div>
+              ))}
             </div>
             
             <div style={styles.totalBreakdown}>
@@ -361,9 +363,6 @@ const OrderForm = () => {
                 <div><FaTruck /> Free delivery on orders over KES 5,000</div>
                 <div><FaShieldAlt /> Secure checkout</div>
                 <div><FaCheckCircle /> Cash on delivery available</div>
-                {formData.payment_method === 'mpesa' && (
-                  <div><FaMobile /> You'll receive an M-Pesa prompt on your phone</div>
-                )}
               </div>
 
               <button 
@@ -380,8 +379,7 @@ const OrderForm = () => {
                   </>
                 ) : (
                   <>
-                    {formData.payment_method === 'mpesa' ? <FaMobile /> : <FaCreditCard />} 
-                    {formData.payment_method === 'mpesa' ? 'Pay with M-Pesa' : 'Place Order'}
+                    <FaCreditCard /> Place Order
                   </>
                 )}
               </button>
@@ -393,6 +391,7 @@ const OrderForm = () => {
   );
 };
 
+// Styles remain the same as before...
 const styles = {
   container: {
     minHeight: '100vh',
@@ -452,41 +451,37 @@ const styles = {
     color: '#333',
     marginBottom: '20px'
   },
-  productCard: {
-    display: 'flex',
-    gap: '15px',
-    padding: '15px',
-    background: '#f8f9fa',
-    borderRadius: '12px',
+  itemsList: {
+    maxHeight: '400px',
+    overflowY: 'auto',
     marginBottom: '20px'
   },
-  productImage: {
-    width: '80px',
-    height: '80px',
+  summaryItem: {
+    display: 'flex',
+    gap: '15px',
+    padding: '12px 0',
+    borderBottom: '1px solid #e0e0e0'
+  },
+  summaryImage: {
+    width: '60px',
+    height: '60px',
     objectFit: 'cover',
     borderRadius: '8px'
   },
-  productDetails: {
+  summaryDetails: {
     flex: 1
   },
-  productName: {
-    fontSize: '16px',
-    fontWeight: 'bold',
-    color: '#333',
+  summaryName: {
+    fontSize: '14px',
+    fontWeight: '500',
     marginBottom: '5px'
   },
-  productCategory: {
+  summaryMeta: {
     fontSize: '12px',
-    color: '#999',
-    marginBottom: '5px'
+    color: '#999'
   },
-  productQuantity: {
-    fontSize: '13px',
-    color: '#666',
-    marginBottom: '5px'
-  },
-  productPrice: {
-    fontSize: '16px',
+  summaryPrice: {
+    fontSize: '14px',
     fontWeight: 'bold',
     color: '#667eea'
   },
@@ -608,4 +603,4 @@ const styles = {
   }
 };
 
-export default OrderForm;
+export default Checkout;
