@@ -1,8 +1,7 @@
-// ProductDetail.jsx - Fixed with custom confirmation modal
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
-import { motion, AnimatePresence, color } from 'framer-motion';
-import { 
+import { motion, AnimatePresence } from 'framer-motion';
+import {
   FaArrowLeft, FaShoppingCart, FaStar, FaStarHalfAlt, FaRegStar,
   FaChevronLeft, FaChevronRight, FaTruck, FaShieldAlt, FaUndo,
   FaUser, FaEdit, FaTrash, FaCheck, FaTimes, FaExclamationTriangle
@@ -73,11 +72,11 @@ const ProductDetail = () => {
       setIsLoading(true);
       const url = `${API_URL}/api/products/${id}`;
       const res = await fetch(url);
-      
+
       if (!res.ok) {
         throw new Error(`HTTP ${res.status}`);
       }
-      
+
       const data = await res.json();
       setProduct(data);
     } catch (error) {
@@ -95,7 +94,7 @@ const ProductDetail = () => {
       if (res.ok) {
         const data = await res.json();
         setReviews(data);
-        
+
         // Check if user has already reviewed
         if (currentUser) {
           const userReview = data.find(r => r.user_id === currentUser.id);
@@ -119,14 +118,14 @@ const ProductDetail = () => {
       navigate('/login');
       return;
     }
-    
+
     if (userRating === 0) {
       showToast('Please select a rating', 'error');
       return;
     }
-    
+
     setIsSubmittingReview(true);
-    
+
     try {
       const res = await fetch(`${API_URL}/api/products/${id}/reviews`, {
         method: 'POST',
@@ -139,7 +138,7 @@ const ProductDetail = () => {
           comment: reviewComment
         })
       });
-      
+
       if (res.ok) {
         showToast('Review submitted successfully!', 'success');
         setShowReviewForm(false);
@@ -163,14 +162,14 @@ const ProductDetail = () => {
       showToast('Please login to update review', 'error');
       return;
     }
-    
+
     if (userRating === 0) {
       showToast('Please select a rating', 'error');
       return;
     }
-    
+
     setIsSubmittingReview(true);
-    
+
     try {
       const res = await fetch(`${API_URL}/api/products/${id}/reviews`, {
         method: 'PUT',
@@ -183,7 +182,7 @@ const ProductDetail = () => {
           comment: reviewComment
         })
       });
-      
+
       if (res.ok) {
         showToast('Review updated successfully!', 'success');
         setEditingReview(null);
@@ -208,7 +207,7 @@ const ProductDetail = () => {
 
   const deleteReview = async () => {
     if (!reviewToDelete) return;
-    
+
     try {
       const res = await fetch(`${API_URL}/api/products/${id}/reviews`, {
         method: 'DELETE',
@@ -216,7 +215,7 @@ const ProductDetail = () => {
           Authorization: `Bearer ${token}`
         }
       });
-      
+
       if (res.ok) {
         showToast('Review deleted successfully!', 'success');
         fetchReviews();
@@ -248,17 +247,17 @@ const ProductDetail = () => {
       navigate('/login');
       return;
     }
-    
+
     try {
       const res = await fetch(`${API_URL}/api/cart/add/${product.id}`, {
         method: 'POST',
-        headers: { 
+        headers: {
           'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}` 
+          Authorization: `Bearer ${token}`
         },
         body: JSON.stringify({ quantity })
       });
-      
+
       if (res.ok) {
         showToast('Product added to cart!', 'success');
         window.dispatchEvent(new Event('cartUpdated'));
@@ -278,24 +277,26 @@ const ProductDetail = () => {
       navigate('/login');
       return;
     }
-    
-    navigate(`/order/${product.id}`, { 
-      state: { 
+
+    navigate(`/order/${product.id}`, {
+      state: {
         product,
         quantity,
         price: product.price,
         total: product.price * quantity
-      } 
+      }
     });
   };
 
   const nextImage = () => {
+    const images = getImages();
     if (images.length > 1) {
       setCurrentImageIndex((prev) => (prev + 1) % images.length);
     }
   };
 
   const prevImage = () => {
+    const images = getImages();
     if (images.length > 1) {
       setCurrentImageIndex((prev) => (prev - 1 + images.length) % images.length);
     }
@@ -307,8 +308,8 @@ const ProductDetail = () => {
       images.push(`${API_URL}/uploads/${product.image_path.replace(/^\/+/, '')}`);
     }
     if (product?.extra_images) {
-      const extraImages = Array.isArray(product.extra_images) 
-        ? product.extra_images 
+      const extraImages = Array.isArray(product.extra_images)
+        ? product.extra_images
         : product.extra_images.split(',');
       extraImages.forEach(img => {
         if (img && img.trim()) {
@@ -329,7 +330,7 @@ const ProductDetail = () => {
     const stars = [];
     const fullStars = Math.floor(rating);
     const hasHalfStar = rating % 1 >= 0.5;
-    
+
     for (let i = 0; i < fullStars; i++) {
       stars.push(<FaStar key={i} style={{ color: '#ffc107', fontSize: '12px' }} />);
     }
@@ -445,7 +446,7 @@ const ProductDetail = () => {
             <div style={styles.productInfo}>
               <h1 style={styles.productTitle}>{product.name}</h1>
               <p style={styles.productCategory}>{product.category || 'Uncategorized'}</p>
-              
+
               <div style={styles.productRating}>
                 <div style={styles.stars}>{renderStars(averageRating)}</div>
                 <span style={styles.ratingCount}>({reviews.length} reviews)</span>
@@ -610,6 +611,172 @@ const ProductDetail = () => {
           </motion.div>
         )}
       </AnimatePresence>
+
+      {/* Add keyframe animations */}
+      <style dangerouslySetInnerHTML={{
+        __html: `
+          @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+          }
+          @keyframes float1 {
+            0% { transform: translateY(100vh) rotate(0deg); opacity: 0; }
+            10% { opacity: 1; }
+            90% { opacity: 1; }
+            100% { transform: translateY(-100vh) rotate(360deg); opacity: 0; }
+          }
+          @keyframes float2 {
+            0% { transform: translateY(100vh) rotate(0deg); opacity: 0; }
+            10% { opacity: 1; }
+            90% { opacity: 1; }
+            100% { transform: translateY(-100vh) rotate(-360deg); opacity: 0; }
+          }
+          @keyframes float3 {
+            0% { transform: translateY(100vh) scale(0.8); opacity: 0; }
+            20% { opacity: 0.8; }
+            80% { opacity: 0.8; }
+            100% { transform: translateY(-100vh) scale(1.2); opacity: 0; }
+          }
+          @keyframes float4 {
+            0% { transform: translateY(100vh) rotate(0deg); opacity: 0; }
+            15% { opacity: 0.7; }
+            85% { opacity: 0.7; }
+            100% { transform: translateY(-100vh) rotate(180deg); opacity: 0; }
+          }
+          @keyframes float5 {
+            0% { transform: translateY(100vh) scale(1); opacity: 0; }
+            25% { opacity: 0.6; }
+            75% { opacity: 0.6; }
+            100% { transform: translateY(-100vh) scale(0.6); opacity: 0; }
+          }
+          
+          /* Responsive Styles */
+          @media (max-width: 768px) {
+            .product-grid {
+              grid-template-columns: 1fr !important;
+              gap: 20px !important;
+            }
+            .main-image-container {
+              height: 250px !important;
+            }
+            .thumbnail-list {
+              flex-direction: row !important;
+              overflow-x: auto !important;
+              max-height: none !important;
+            }
+            .product-title {
+              font-size: 20px !important;
+            }
+            .price {
+              font-size: 20px !important;
+            }
+            .action-buttons {
+              flex-direction: column !important;
+            }
+            .reviews-section {
+              padding: 15px !important;
+            }
+          }
+          
+          @media (max-width: 480px) {
+            .content {
+              padding: 60px 12px 30px !important;
+            }
+            .product-card {
+              padding: 15px !important;
+            }
+            .main-image-container {
+              height: 200px !important;
+            }
+            .thumbnail {
+              width: 40px !important;
+              height: 40px !important;
+            }
+            .product-title {
+              font-size: 18px !important;
+            }
+            .price {
+              font-size: 18px !important;
+            }
+            .description {
+              font-size: 12px !important;
+            }
+            .quantity-button {
+              width: 24px !important;
+              height: 24px !important;
+            }
+            .add-to-cart-button, .buy-now-button {
+              padding: 10px !important;
+              font-size: 12px !important;
+            }
+            .info-item {
+              font-size: 9px !important;
+            }
+            .reviews-title {
+              font-size: 16px !important;
+            }
+            .write-review-btn {
+              padding: 4px 10px !important;
+              font-size: 11px !important;
+            }
+            .avg-number {
+              font-size: 24px !important;
+            }
+            .review-item-compact {
+              padding: 10px !important;
+            }
+            .review-header-compact {
+              gap: 8px !important;
+            }
+            .modal-content {
+              padding: 20px !important;
+              margin: 0 16px !important;
+            }
+          }
+          
+          /* Touch-friendly improvements */
+          @media (hover: none) and (pointer: coarse) {
+            button, .thumbnail {
+              min-height: 44px;
+            }
+            .quantity-button {
+              min-height: 36px;
+              min-width: 36px;
+            }
+            .add-to-cart-button, .buy-now-button {
+              padding: 12px !important;
+            }
+          }
+          
+          /* Smooth scrolling */
+          .reviews-list-compact {
+            scrollbar-width: thin;
+          }
+          .reviews-list-compact::-webkit-scrollbar {
+            width: 4px;
+          }
+          .reviews-list-compact::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 4px;
+          }
+          .reviews-list-compact::-webkit-scrollbar-thumb {
+            background: #888;
+            border-radius: 4px;
+          }
+          
+          .thumbnail-list::-webkit-scrollbar {
+            height: 4px;
+          }
+          .thumbnail-list::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 4px;
+          }
+          .thumbnail-list::-webkit-scrollbar-thumb {
+            background: #888;
+            border-radius: 4px;
+          }
+        `
+      }} />
     </div>
   );
 };
@@ -619,40 +786,46 @@ const styles = {
     minHeight: '100vh',
     background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
     position: 'relative',
-    overflow: 'hidden',
+    overflowX: 'hidden',
     fontFamily: "'Poppins', 'Segoe UI', sans-serif"
   },
   backgroundElements: {
-    position: 'absolute',
+    position: 'fixed',
     width: '100%',
     height: '100%',
     pointerEvents: 'none',
-    overflow: 'hidden'
+    overflow: 'hidden',
+    top: 0,
+    left: 0
   },
   floatingElement: {
     position: 'absolute',
     pointerEvents: 'none',
-    userSelect: 'none'
+    userSelect: 'none',
+    bottom: '-100px'
   },
   content: {
     position: 'relative',
     zIndex: 1,
     padding: '80px 20px 40px',
     maxWidth: '1000px',
-    margin: '0 auto'
+    margin: '0 auto',
+    width: '100%',
+    boxSizing: 'border-box'
   },
   backButton: {
     display: 'inline-flex',
     alignItems: 'center',
     gap: '8px',
     padding: '8px 16px',
-    background: 'violet',
+    background: 'rgba(255,255,255,0.9)',
     border: 'none',
     borderRadius: '8px',
     cursor: 'pointer',
     marginBottom: '20px',
     fontSize: '13px',
-    fontWeight: '500'
+    fontWeight: '500',
+    color: '#333'
   },
   backButtonLink: {
     display: 'inline-flex',
@@ -709,14 +882,18 @@ const styles = {
     width: '32px',
     height: '32px',
     cursor: 'pointer',
-    zIndex: 2
+    zIndex: 2,
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center'
   },
   leftArrow: { left: '10px' },
   rightArrow: { right: '10px' },
   thumbnailList: {
     display: 'flex',
     gap: '8px',
-    overflowX: 'auto'
+    overflowX: 'auto',
+    paddingBottom: '4px'
   },
   thumbnail: {
     width: '50px',
@@ -724,7 +901,10 @@ const styles = {
     borderRadius: '6px',
     border: '2px solid transparent',
     cursor: 'pointer',
-    overflow: 'hidden'
+    overflow: 'hidden',
+    flexShrink: 0,
+    background: 'none',
+    padding: 0
   },
   activeThumbnail: { borderColor: '#667eea' },
   thumbnailImg: {
@@ -735,8 +915,7 @@ const styles = {
   productInfo: {
     display: 'flex',
     flexDirection: 'column',
-    gap: '10px',
-    
+    gap: '10px'
   },
   productTitle: {
     fontSize: '22px',
@@ -746,12 +925,14 @@ const styles = {
   },
   productCategory: {
     fontSize: '12px',
-    color: '#999'
+    color: '#999',
+    margin: 0
   },
   productRating: {
     display: 'flex',
     alignItems: 'center',
-    gap: '8px'
+    gap: '8px',
+    flexWrap: 'wrap'
   },
   stars: {
     display: 'flex',
@@ -767,17 +948,19 @@ const styles = {
     gap: '10px',
     padding: '10px 0',
     borderTop: '1px solid #e0e0e0',
-    borderBottom: '1px solid #e0e0e0'
+    borderBottom: '1px solid #e0e0e0',
+    flexWrap: 'wrap'
   },
   priceLabel: { fontSize: '14px', color: '#666' },
   price: { fontSize: '22px', fontWeight: 'bold', color: '#667eea' },
   descriptionSection: { marginTop: '5px' },
-  description: { fontSize: '13.5px', lineHeight: '1.5', color: '#413f3f' },
+  description: { fontSize: '13.5px', lineHeight: '1.5', color: '#413f3f', margin: 0 },
   quantitySection: {
     display: 'flex',
     alignItems: 'center',
     gap: '12px',
-    marginTop: '5px'
+    marginTop: '5px',
+    flexWrap: 'wrap'
   },
   quantityLabel: { fontSize: '13px', fontWeight: '500' },
   quantitySelector: {
@@ -793,13 +976,17 @@ const styles = {
     background: '#f5f5f5',
     border: 'none',
     cursor: 'pointer',
-    fontSize: '14px'
+    fontSize: '14px',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center'
   },
   quantityValue: { width: '35px', textAlign: 'center', fontSize: '13px' },
   actionButtons: {
     display: 'flex',
     gap: '10px',
-    marginTop: '10px'
+    marginTop: '10px',
+    flexDirection: 'row'
   },
   addToCartButton: {
     flex: 1,
@@ -837,8 +1024,7 @@ const styles = {
     borderTop: '1px solid #e0e0e0',
     display: 'flex',
     gap: '15px',
-    flexWrap: 'wrap',
-   
+    flexWrap: 'wrap'
   },
   infoItem: {
     display: 'flex',
@@ -857,7 +1043,9 @@ const styles = {
     display: 'flex',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: '15px'
+    marginBottom: '15px',
+    flexWrap: 'wrap',
+    gap: '10px'
   },
   reviewsTitle: {
     fontSize: '18px',
@@ -882,7 +1070,8 @@ const styles = {
   averageRatingCompact: {
     display: 'flex',
     alignItems: 'center',
-    gap: '12px'
+    gap: '12px',
+    flexWrap: 'wrap'
   },
   avgNumber: {
     fontSize: '28px',
@@ -901,7 +1090,8 @@ const styles = {
     display: 'flex',
     alignItems: 'center',
     gap: '8px',
-    marginBottom: '10px'
+    marginBottom: '10px',
+    flexWrap: 'wrap'
   },
   starInput: { fontSize: '18px', transition: 'color 0.2s' },
   reviewTextareaCompact: {
@@ -911,7 +1101,8 @@ const styles = {
     borderRadius: '6px',
     fontSize: '12px',
     fontFamily: 'inherit',
-    marginBottom: '10px'
+    marginBottom: '10px',
+    boxSizing: 'border-box'
   },
   submitReviewBtn: {
     padding: '6px 12px',
@@ -958,23 +1149,29 @@ const styles = {
     border: 'none',
     color: '#667eea',
     cursor: 'pointer',
-    padding: '2px'
+    padding: '2px',
+    display: 'flex',
+    alignItems: 'center'
   },
   deleteReviewBtn: {
     background: 'none',
     border: 'none',
     color: '#dc3545',
     cursor: 'pointer',
-    padding: '2px'
+    padding: '2px',
+    display: 'flex',
+    alignItems: 'center'
   },
   reviewCommentCompact: {
     fontSize: '12px',
     color: '#666',
-    marginBottom: '6px'
+    marginBottom: '6px',
+    wordBreak: 'break-word'
   },
   reviewDateCompact: {
     fontSize: '10px',
-    color: '#999'
+    color: '#999',
+    display: 'block'
   },
   noReviews: {
     textAlign: 'center',
@@ -1001,7 +1198,8 @@ const styles = {
     padding: '30px',
     maxWidth: '400px',
     width: '100%',
-    textAlign: 'center'
+    textAlign: 'center',
+    boxSizing: 'border-box'
   },
   modalIcon: {
     fontSize: '48px',
@@ -1021,7 +1219,8 @@ const styles = {
   },
   modalButtons: {
     display: 'flex',
-    gap: '10px'
+    gap: '10px',
+    flexWrap: 'wrap'
   },
   modalCancelBtn: {
     flex: 1,
@@ -1031,7 +1230,8 @@ const styles = {
     border: '1px solid #e0e0e0',
     borderRadius: '8px',
     cursor: 'pointer',
-    fontSize: '14px'
+    fontSize: '14px',
+    minWidth: '100px'
   },
   modalConfirmBtn: {
     flex: 1,
@@ -1041,7 +1241,8 @@ const styles = {
     border: 'none',
     borderRadius: '8px',
     cursor: 'pointer',
-    fontSize: '14px'
+    fontSize: '14px',
+    minWidth: '100px'
   },
   loadingContainer: {
     display: 'flex',
@@ -1061,8 +1262,22 @@ const styles = {
     background: 'white',
     borderRadius: '15px',
     maxWidth: '400px',
-    margin: '100px auto'
+    margin: '100px auto',
+    boxSizing: 'border-box'
   }
 };
+
+// Add responsive styles to the component
+const responsiveStyles = `
+  @media (max-width: 768px) {
+    .product-grid {
+      grid-template-columns: 1fr !important;
+      gap: 20px !important;
+    }
+    .action-buttons {
+      flex-direction: column !important;
+    }
+  }
+`;
 
 export default ProductDetail;

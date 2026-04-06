@@ -378,7 +378,39 @@ const styles = {
     color: '#333',
     marginBottom: '10px',
     fontFamily: "'Poppins', 'Segoe UI', sans-serif"
-  },
+  },filterBar: {
+      background: '#f1fded',
+      borderRadius: '16px',
+      padding: '20px',
+      marginBottom: '24px',
+      border: '1px solid #e9ecef'
+    },
+    searchWrapper: {
+      position: 'relative',
+      marginBottom: '16px',
+      maxWidth: '500px',
+      marginLeft: 'auto',
+      marginRight: 'auto'
+    },
+    searchIcon: {
+      position: 'absolute',
+      left: '16px',
+      top: '50%',
+      transform: 'translateY(-50%)',
+      color: '#adb5bd',
+      fontSize: '16px'
+    },
+    searchInput: {
+      width: '100%',
+      padding: '12px 50px 12px 48px',
+      background: '#ffffff',
+      border: '1px solid #dee2e6',
+      borderRadius: '12px',
+      fontSize: '14px',
+      color: '#212529',
+      outline: 'none',
+      transition: 'all 0.2s',
+    },
   subtitle: {
     fontSize: '14px',
     color: '#666',

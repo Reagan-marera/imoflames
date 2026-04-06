@@ -1,13 +1,15 @@
-// Profile.js
+// Profile.js - Updated with token handling, compact layout, and save button
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { FaUser, FaEnvelope, FaCamera, FaSave, FaEdit, FaLock, FaCheck } from 'react-icons/fa';
+import { FaUser, FaEnvelope, FaCamera, FaSave, FaEdit, FaLock, FaCheck, FaTimes, FaSpinner, FaArrowLeft } from 'react-icons/fa';
 import { API_URL } from '../config';
 import { showToast } from './utils';
 
 const Profile = () => {
   const [user, setUser] = useState(null);
   const [isEditing, setIsEditing] = useState(false);
+  const [activeTab, setActiveTab] = useState('info'); // 'info', 'edit', 'password'
   const [formData, setFormData] = useState({
     username: '',
     email: '',
@@ -20,16 +22,36 @@ const Profile = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   const token = localStorage.getItem('token');
+  const navigate = useNavigate();
 
   useEffect(() => {
-    fetchUserProfile();
+    checkTokenAndFetchProfile();
   }, []);
+
+  const checkTokenAndFetchProfile = async () => {
+    if (!token) {
+      showToast('Please login to view your profile', 'error');
+      navigate('/login');
+      return;
+    }
+    await fetchUserProfile();
+  };
 
   const fetchUserProfile = async () => {
     try {
       const res = await fetch(`${API_URL}/api/user/profile`, {
         headers: { Authorization: `Bearer ${token}` }
       });
+      
+      if (res.status === 401) {
+        // Token expired or invalid
+        localStorage.removeItem('token');
+        localStorage.removeItem('user');
+        showToast('Session expired. Please login again.', 'error');
+        navigate('/login');
+        return;
+      }
+      
       if (res.ok) {
         const data = await res.json();
         setUser(data);
@@ -41,12 +63,15 @@ const Profile = () => {
           confirm_password: ''
         });
         if (data.profile_picture) {
-          setProfilePreview(`${API_URL}/api/uploads/${data.profile_picture}`);
+          setProfilePreview(`${API_URL}/uploads/${data.profile_picture}`);
         }
+      } else {
+        const error = await res.json();
+        showToast(error.message || 'Failed to load profile', 'error');
       }
     } catch (error) {
       console.error('Error fetching profile:', error);
-      showToast('Failed to load profile', 'error');
+      showToast('Failed to load profile. Please check your connection.', 'error');
     }
   };
 
@@ -67,8 +92,10 @@ const Profile = () => {
     }
   };
 
-  const uploadProfilePicture = async () => {
-    if (!profilePicture) return null;
+  const handleSaveProfilePicture = async () => {
+    if (!profilePicture) return;
+    
+    setIsUploading(true);
     
     const formData = new FormData();
     formData.append('profile_picture', profilePicture);
@@ -80,14 +107,37 @@ const Profile = () => {
         body: formData
       });
       
+      if (res.status === 401) {
+        localStorage.removeItem('token');
+        localStorage.removeItem('user');
+        showToast('Session expired. Please login again.', 'error');
+        navigate('/login');
+        return;
+      }
+      
       if (res.ok) {
         const data = await res.json();
-        return data.profile_picture;
+        showToast('Profile picture updated successfully!', 'success');
+        setUser(prev => ({ ...prev, profile_picture: data.profile_picture }));
+        setProfilePicture(null);
+      } else {
+        const error = await res.json();
+        showToast(error.message || 'Failed to update profile picture', 'error');
       }
-      return null;
     } catch (error) {
       console.error('Error uploading profile picture:', error);
-      return null;
+      showToast('Failed to upload profile picture', 'error');
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
+  const handleCancelProfilePicture = () => {
+    setProfilePicture(null);
+    if (user?.profile_picture) {
+      setProfilePreview(`${API_URL}/uploads/${user.profile_picture}`);
+    } else {
+      setProfilePreview(null);
     }
   };
 
@@ -96,20 +146,9 @@ const Profile = () => {
     setIsLoading(true);
     
     try {
-      // Update profile picture if changed
-      let profilePicturePath = user?.profile_picture;
-      if (profilePicture) {
-        const uploadedPath = await uploadProfilePicture();
-        if (uploadedPath) {
-          profilePicturePath = uploadedPath;
-        }
-      }
-      
-      // Update user info
       const updateData = {
         username: formData.username,
         email: formData.email,
-        profile_picture: profilePicturePath
       };
       
       const res = await fetch(`${API_URL}/api/user/profile`, {
@@ -121,14 +160,24 @@ const Profile = () => {
         body: JSON.stringify(updateData)
       });
       
+      if (res.status === 401) {
+        localStorage.removeItem('token');
+        localStorage.removeItem('user');
+        showToast('Session expired. Please login again.', 'error');
+        navigate('/login');
+        return;
+      }
+      
       if (res.ok) {
         const updatedUser = await res.json();
         setUser(updatedUser);
         setIsEditing(false);
+        setActiveTab('info');
         showToast('Profile updated successfully!', 'success');
         
         // Update localStorage
-        localStorage.setItem('user', JSON.stringify(updatedUser));
+        const storedUser = JSON.parse(localStorage.getItem('user') || '{}');
+        localStorage.setItem('user', JSON.stringify({ ...storedUser, ...updatedUser }));
       } else {
         const error = await res.json();
         showToast(error.message || 'Failed to update profile', 'error');
@@ -169,6 +218,14 @@ const Profile = () => {
         })
       });
       
+      if (res.status === 401) {
+        localStorage.removeItem('token');
+        localStorage.removeItem('user');
+        showToast('Session expired. Please login again.', 'error');
+        navigate('/login');
+        return;
+      }
+      
       if (res.ok) {
         showToast('Password changed successfully!', 'success');
         setFormData({
@@ -177,6 +234,7 @@ const Profile = () => {
           new_password: '',
           confirm_password: ''
         });
+        setActiveTab('info');
       } else {
         const error = await res.json();
         showToast(error.message || 'Failed to change password', 'error');
@@ -223,6 +281,11 @@ const Profile = () => {
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5 }}
       >
+        {/* Back Button */}
+        <button onClick={() => navigate(-1)} style={styles.backButton}>
+          <FaArrowLeft /> Back
+        </button>
+
         <div style={styles.header}>
           <div style={styles.profilePictureContainer}>
             <div style={styles.profilePictureWrapper}>
@@ -230,83 +293,96 @@ const Profile = () => {
                 <img src={profilePreview} alt="Profile" style={styles.profilePicture} />
               ) : (
                 <div style={styles.profilePlaceholder}>
-                  <FaUser size={60} />
+                  <FaUser size={48} />
                 </div>
               )}
               <label htmlFor="profile-picture" style={styles.cameraIcon}>
-                <FaCamera />
+                <FaCamera size={14} />
                 <input
                   type="file"
                   id="profile-picture"
                   accept="image/*"
                   onChange={handleProfilePictureChange}
                   style={{ display: 'none' }}
-                  disabled={isUploading}
                 />
               </label>
             </div>
+            {profilePicture && (
+              <div style={styles.pictureActions}>
+                <button onClick={handleSaveProfilePicture} style={styles.savePictureBtn} disabled={isUploading}>
+                  {isUploading ? <FaSpinner style={styles.spinner} /> : <FaCheck />}
+                </button>
+                <button onClick={handleCancelProfilePicture} style={styles.cancelPictureBtn}>
+                  <FaTimes />
+                </button>
+              </div>
+            )}
           </div>
-          <h1 style={styles.title}>My Profile</h1>
-          <p style={styles.subtitle}>Manage your account information</p>
+          <h1 style={styles.title}>{user.username}</h1>
+          <p style={styles.subtitle}>{user.email}</p>
         </div>
 
         <div style={styles.tabs}>
           <button
-            onClick={() => setIsEditing(false)}
-            style={{ ...styles.tab, ...(!isEditing ? styles.activeTab : {}) }}
+            onClick={() => { setActiveTab('info'); setIsEditing(false); }}
+            style={{ ...styles.tab, ...(activeTab === 'info' ? styles.activeTab : {}) }}
           >
-            <FaUser /> Profile Info
+            <FaUser size={12} /> Info
           </button>
           <button
-            onClick={() => setIsEditing(true)}
-            style={{ ...styles.tab, ...(isEditing ? styles.activeTab : {}) }}
+            onClick={() => { setActiveTab('edit'); setIsEditing(true); }}
+            style={{ ...styles.tab, ...(activeTab === 'edit' ? styles.activeTab : {}) }}
           >
-            <FaEdit /> Edit Profile
+            <FaEdit size={12} /> Edit
           </button>
           <button
-            onClick={() => setIsEditing(true)}
-            style={{ ...styles.tab, ...(isEditing ? styles.activeTab : {}) }}
+            onClick={() => { setActiveTab('password'); setIsEditing(true); }}
+            style={{ ...styles.tab, ...(activeTab === 'password' ? styles.activeTab : {}) }}
           >
-            <FaLock /> Change Password
+            <FaLock size={12} /> Password
           </button>
         </div>
 
-        {!isEditing ? (
-          // View Profile
+        {/* Profile Info Tab */}
+        {activeTab === 'info' && (
           <div style={styles.profileInfo}>
             <div style={styles.infoRow}>
-              <span style={styles.infoLabel}>Username:</span>
+              <span style={styles.infoLabel}>Username</span>
               <span style={styles.infoValue}>{user.username}</span>
             </div>
             <div style={styles.infoRow}>
-              <span style={styles.infoLabel}>Email:</span>
+              <span style={styles.infoLabel}>Email</span>
               <span style={styles.infoValue}>{user.email}</span>
             </div>
             <div style={styles.infoRow}>
-              <span style={styles.infoLabel}>Account Status:</span>
+              <span style={styles.infoLabel}>Status</span>
               <span style={styles.infoValue}>
                 {user.is_verified ? (
-                  <span style={styles.verified}><FaCheck /> Verified</span>
+                  <span style={styles.verified}><FaCheck size={10} /> Verified</span>
                 ) : (
                   <span style={styles.unverified}>Not Verified</span>
                 )}
               </span>
             </div>
             <div style={styles.infoRow}>
-              <span style={styles.infoLabel}>Role:</span>
+              <span style={styles.infoLabel}>Role</span>
               <span style={styles.infoValue}>
                 {user.is_admin ? 'Administrator' : (user.can_upload ? 'Seller' : 'Customer')}
               </span>
             </div>
-            <div style={styles.infoRow}>
-              <span style={styles.infoLabel}>Member Since:</span>
-              <span style={styles.infoValue}>
-                {new Date(user.created_at).toLocaleDateString()}
-              </span>
-            </div>
+            {user.created_at && (
+              <div style={styles.infoRow}>
+                <span style={styles.infoLabel}>Member Since</span>
+                <span style={styles.infoValue}>
+                  {new Date(user.created_at).toLocaleDateString()}
+                </span>
+              </div>
+            )}
           </div>
-        ) : (
-          // Edit Profile Form
+        )}
+
+        {/* Edit Profile Tab */}
+        {activeTab === 'edit' && (
           <form onSubmit={handleUpdateProfile} style={styles.form}>
             <div style={styles.inputGroup}>
               <div style={styles.inputIcon}>👤</div>
@@ -334,29 +410,32 @@ const Profile = () => {
               />
             </div>
 
-            <button
-              type="submit"
-              disabled={isLoading}
-              style={{
-                ...styles.submitButton,
-                ...(isLoading ? styles.buttonDisabled : {})
-              }}
-            >
-              {isLoading ? (
-                <span style={styles.loadingSpinner}>⏳</span>
-              ) : (
-                <>
-                  <FaSave /> Save Changes
-                </>
-              )}
-            </button>
+            <div style={styles.formActions}>
+              <button
+                type="submit"
+                disabled={isLoading}
+                style={{
+                  ...styles.submitButton,
+                  ...(isLoading ? styles.buttonDisabled : {})
+                }}
+              >
+                {isLoading ? <FaSpinner style={styles.spinner} /> : <FaSave />}
+                Save Changes
+              </button>
+              <button
+                type="button"
+                onClick={() => { setActiveTab('info'); setIsEditing(false); }}
+                style={styles.cancelButton}
+              >
+                Cancel
+              </button>
+            </div>
           </form>
         )}
 
-        {/* Change Password Section */}
-        {isEditing && (
-          <form onSubmit={handleChangePassword} style={{...styles.form, marginTop: '20px'}}>
-            <h3 style={styles.sectionTitle}>Change Password</h3>
+        {/* Change Password Tab */}
+        {activeTab === 'password' && (
+          <form onSubmit={handleChangePassword} style={styles.form}>
             <div style={styles.inputGroup}>
               <div style={styles.inputIcon}>🔒</div>
               <input
@@ -396,23 +475,27 @@ const Profile = () => {
               />
             </div>
 
-            <button
-              type="submit"
-              disabled={isLoading}
-              style={{
-                ...styles.submitButton,
-                ...(isLoading ? styles.buttonDisabled : {}),
-                background: 'linear-gradient(135deg, #ff6b6b 0%, #c92a2a 100%)'
-              }}
-            >
-              {isLoading ? (
-                <span style={styles.loadingSpinner}>⏳</span>
-              ) : (
-                <>
-                  <FaLock /> Change Password
-                </>
-              )}
-            </button>
+            <div style={styles.formActions}>
+              <button
+                type="submit"
+                disabled={isLoading}
+                style={{
+                  ...styles.submitButton,
+                  ...(isLoading ? styles.buttonDisabled : {}),
+                  background: 'linear-gradient(135deg, #ff6b6b 0%, #c92a2a 100%)'
+                }}
+              >
+                {isLoading ? <FaSpinner style={styles.spinner} /> : <FaLock />}
+                Change Password
+              </button>
+              <button
+                type="button"
+                onClick={() => { setActiveTab('info'); setIsEditing(false); }}
+                style={styles.cancelButton}
+              >
+                Cancel
+              </button>
+            </div>
           </form>
         )}
       </motion.div>
@@ -426,7 +509,7 @@ const styles = {
     background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
     position: 'relative',
     overflow: 'hidden',
-    padding: '80px 20px 40px',
+    padding: '60px 20px 40px',
     fontFamily: "'Poppins', 'Segoe UI', sans-serif"
   },
   backgroundElements: {
@@ -438,40 +521,54 @@ const styles = {
   },
   floatingElement: {
     position: 'absolute',
-    fontSize: '30px',
+    fontSize: '24px',
     opacity: 0.1,
     pointerEvents: 'none'
   },
   card: {
-    maxWidth: '600px',
+    maxWidth: '500px',
     margin: '0 auto',
     background: 'white',
     borderRadius: '20px',
     boxShadow: '0 20px 60px rgba(0,0,0,0.3)',
-    padding: '40px',
+    padding: '24px',
     position: 'relative',
     zIndex: 1
   },
+  backButton: {
+    display: 'inline-flex',
+    alignItems: 'center',
+    gap: '6px',
+    padding: '6px 12px',
+    background: '#f5f5f5',
+    border: 'none',
+    borderRadius: '8px',
+    cursor: 'pointer',
+    fontSize: '12px',
+    marginBottom: '16px',
+    transition: 'all 0.2s'
+  },
   header: {
     textAlign: 'center',
-    marginBottom: '30px'
+    marginBottom: '20px'
   },
   profilePictureContainer: {
     display: 'flex',
-    justifyContent: 'center',
-    marginBottom: '20px'
+    flexDirection: 'column',
+    alignItems: 'center',
+    marginBottom: '12px'
   },
   profilePictureWrapper: {
     position: 'relative',
-    width: '120px',
-    height: '120px'
+    width: '80px',
+    height: '80px'
   },
   profilePicture: {
     width: '100%',
     height: '100%',
     borderRadius: '50%',
     objectFit: 'cover',
-    border: '4px solid #667eea'
+    border: '3px solid #667eea'
   },
   profilePlaceholder: {
     width: '100%',
@@ -485,76 +582,111 @@ const styles = {
   },
   cameraIcon: {
     position: 'absolute',
-    bottom: '5px',
-    right: '5px',
+    bottom: '0',
+    right: '0',
     background: '#667eea',
     borderRadius: '50%',
-    padding: '8px',
+    padding: '6px',
     cursor: 'pointer',
     color: 'white',
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
-    transition: 'transform 0.2s ease'
+    transition: 'transform 0.2s ease',
+    width: '26px',
+    height: '26px'
+  },
+  pictureActions: {
+    display: 'flex',
+    gap: '8px',
+    marginTop: '8px'
+  },
+  savePictureBtn: {
+    background: '#28a745',
+    color: 'white',
+    border: 'none',
+    borderRadius: '6px',
+    padding: '4px 12px',
+    fontSize: '11px',
+    cursor: 'pointer',
+    display: 'flex',
+    alignItems: 'center',
+    gap: '4px'
+  },
+  cancelPictureBtn: {
+    background: '#dc3545',
+    color: 'white',
+    border: 'none',
+    borderRadius: '6px',
+    padding: '4px 12px',
+    fontSize: '11px',
+    cursor: 'pointer',
+    display: 'flex',
+    alignItems: 'center',
+    gap: '4px'
   },
   title: {
-    fontSize: '28px',
+    fontSize: '20px',
     fontWeight: 'bold',
     color: '#333',
-    marginBottom: '10px'
+    marginBottom: '4px'
   },
   subtitle: {
-    fontSize: '14px',
-    color: '#666'
+    fontSize: '12px',
+    color: '#999'
   },
   tabs: {
     display: 'flex',
-    gap: '10px',
-    marginBottom: '30px',
-    borderBottom: '2px solid #e0e0e0'
+    gap: '8px',
+    marginBottom: '20px',
+    borderBottom: '1px solid #e0e0e0',
+    paddingBottom: '8px'
   },
   tab: {
-    padding: '10px 20px',
+    padding: '6px 16px',
     background: 'none',
     border: 'none',
     cursor: 'pointer',
-    fontSize: '14px',
+    fontSize: '12px',
     fontWeight: '500',
     color: '#666',
     display: 'flex',
     alignItems: 'center',
-    gap: '8px',
-    transition: 'all 0.2s ease'
+    gap: '6px',
+    transition: 'all 0.2s ease',
+    borderRadius: '20px'
   },
   activeTab: {
     color: '#667eea',
-    borderBottom: '2px solid #667eea',
-    marginBottom: '-2px'
+    background: 'rgba(102,126,234,0.1)'
   },
   profileInfo: {
     display: 'flex',
     flexDirection: 'column',
-    gap: '15px'
+    gap: '10px'
   },
   infoRow: {
     display: 'flex',
-    padding: '10px 0',
+    padding: '8px 0',
     borderBottom: '1px solid #f0f0f0'
   },
   infoLabel: {
-    width: '120px',
+    width: '100px',
     fontWeight: '600',
-    color: '#666'
+    color: '#666',
+    fontSize: '13px'
   },
   infoValue: {
     flex: 1,
-    color: '#333'
+    color: '#333',
+    fontSize: '13px',
+    wordBreak: 'break-word'
   },
   verified: {
     color: '#28a745',
     display: 'inline-flex',
     alignItems: 'center',
-    gap: '5px'
+    gap: '4px'
   },
   unverified: {
     color: '#dc3545'
@@ -562,13 +694,7 @@ const styles = {
   form: {
     display: 'flex',
     flexDirection: 'column',
-    gap: '20px'
-  },
-  sectionTitle: {
-    fontSize: '18px',
-    fontWeight: '600',
-    color: '#333',
-    marginBottom: '15px'
+    gap: '12px'
   },
   inputGroup: {
     position: 'relative',
@@ -578,27 +704,33 @@ const styles = {
   inputIcon: {
     position: 'absolute',
     left: '12px',
-    fontSize: '18px',
+    fontSize: '14px',
     color: '#999',
     zIndex: 1
   },
   input: {
     width: '100%',
-    padding: '12px 12px 12px 40px',
-    border: '2px solid #e0e0e0',
-    borderRadius: '10px',
-    fontSize: '14px',
+    padding: '10px 12px 10px 38px',
+    border: '1px solid #e0e0e0',
+    borderRadius: '8px',
+    fontSize: '13px',
     transition: 'all 0.3s ease',
     fontFamily: "'Poppins', 'Segoe UI', sans-serif",
     outline: 'none'
   },
+  formActions: {
+    display: 'flex',
+    gap: '10px',
+    marginTop: '4px'
+  },
   submitButton: {
+    flex: 1,
     background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
     color: 'white',
-    padding: '14px',
+    padding: '10px',
     border: 'none',
-    borderRadius: '10px',
-    fontSize: '16px',
+    borderRadius: '8px',
+    fontSize: '13px',
     fontWeight: 'bold',
     cursor: 'pointer',
     transition: 'transform 0.2s ease, box-shadow 0.2s ease',
@@ -606,21 +738,79 @@ const styles = {
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: '10px'
+    gap: '8px'
+  },
+  cancelButton: {
+    flex: 1,
+    background: '#f5f5f5',
+    color: '#666',
+    padding: '10px',
+    border: '1px solid #e0e0e0',
+    borderRadius: '8px',
+    fontSize: '13px',
+    fontWeight: '500',
+    cursor: 'pointer',
+    transition: 'all 0.2s ease',
+    fontFamily: "'Poppins', 'Segoe UI', sans-serif",
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: '8px'
   },
   buttonDisabled: {
     opacity: 0.7,
     cursor: 'not-allowed'
   },
-  loadingSpinner: {
-    display: 'inline-block',
+  spinner: {
     animation: 'spin 1s linear infinite'
   },
   loadingContainer: {
     textAlign: 'center',
     padding: '60px',
     color: 'white'
+  },
+  loadingSpinner: {
+    fontSize: '40px',
+    animation: 'spin 1s linear infinite',
+    display: 'inline-block'
   }
 };
+
+// Add keyframes
+const styleSheet = document.createElement("style");
+styleSheet.textContent = `
+  @keyframes spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+  }
+  @keyframes float1 {
+    0%, 100% { transform: translate(0, 0); }
+    50% { transform: translate(30px, 20px); }
+  }
+  @keyframes float2 {
+    0%, 100% { transform: translate(0, 0); }
+    50% { transform: translate(-20px, 30px); }
+  }
+  @keyframes float3 {
+    0%, 100% { transform: translate(0, 0); }
+    50% { transform: translate(40px, -10px); }
+  }
+  @keyframes float4 {
+    0%, 100% { transform: translate(0, 0); }
+    50% { transform: translate(-30px, -20px); }
+  }
+  @keyframes float5 {
+    0%, 100% { transform: translate(0, 0); }
+    50% { transform: translate(20px, -30px); }
+  }
+  input:focus {
+    border-color: #667eea !important;
+    box-shadow: 0 0 0 2px rgba(102,126,234,0.1) !important;
+  }
+  button:hover:not(:disabled) {
+    transform: translateY(-1px);
+  }
+`;
+document.head.appendChild(styleSheet);
 
 export default Profile;

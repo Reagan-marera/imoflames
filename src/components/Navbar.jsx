@@ -1,9 +1,9 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import {
   FaHome, FaEnvelope, FaUpload, FaShoppingCart, FaSignInAlt,
   FaUserPlus, FaUserCircle, FaMoon, FaSun, FaBars, FaTimes,
-  FaStore, FaTag, FaCrown, FaBell
+  FaStore, FaTag, FaBell, FaCrown, FaClipboardList, FaMicrochip
 } from 'react-icons/fa';
 import { motion, AnimatePresence } from 'framer-motion';
 import './Navbar.css';
@@ -12,23 +12,38 @@ import { API_URL } from '../config';
 const Navbar = () => {
   const [darkMode, setDarkMode] = useState(() => {
     const savedMode = localStorage.getItem('darkMode');
-    // Default to light mode (false) if no saved preference
     return savedMode ? JSON.parse(savedMode) : false;
   });
   const [currentUser, setCurrentUser] = useState(null);
   const [menuOpen, setMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const [cartCount, setCartCount] = useState(0);
-  const [notificationCount, setNotificationCount] = useState(0);
   const [hoveringLogo, setHoveringLogo] = useState(false);
+  const [dropdownOpen, setDropdownOpen] = useState(false);
+  const dropdownTimeoutRef = useRef(null);
   const navigate = useNavigate();
   const location = useLocation();
 
   const fetchUserData = useCallback(async () => {
     const user = localStorage.getItem('user');
-    if (user) {
+    const token = localStorage.getItem('token');
+    if (user && token) {
       const parsedUser = JSON.parse(user);
       setCurrentUser(parsedUser);
+      
+      // Fetch fresh user data from backend to check permissions
+      try {
+        const res = await fetch(`${API_URL}/api/users/me`, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        if (res.ok) {
+          const freshUser = await res.json();
+          setCurrentUser(prev => ({ ...prev, ...freshUser }));
+          localStorage.setItem('user', JSON.stringify({ ...parsedUser, ...freshUser }));
+        }
+      } catch (err) {
+        console.error('Error fetching user data:', err);
+      }
     } else {
       setCurrentUser(null);
     }
@@ -83,6 +98,23 @@ const Navbar = () => {
     };
   }, [location]);
 
+  // Auto-retract dropdown after 5 seconds
+  useEffect(() => {
+    if (dropdownOpen) {
+      if (dropdownTimeoutRef.current) {
+        clearTimeout(dropdownTimeoutRef.current);
+      }
+      dropdownTimeoutRef.current = setTimeout(() => {
+        setDropdownOpen(false);
+      }, 5000);
+    }
+    return () => {
+      if (dropdownTimeoutRef.current) {
+        clearTimeout(dropdownTimeoutRef.current);
+      }
+    };
+  }, [dropdownOpen]);
+
   const toggleDarkMode = () => {
     setDarkMode(prev => !prev);
     document.body.classList.add('theme-transition');
@@ -95,6 +127,7 @@ const Navbar = () => {
     localStorage.removeItem('token');
     localStorage.removeItem('user');
     setCurrentUser(null);
+    setDropdownOpen(false);
     navigate('/');
     showToast('Logged out successfully! 👋', 'success');
   };
@@ -109,6 +142,10 @@ const Navbar = () => {
     window.dispatchEvent(toastEvent);
   };
 
+  const canUpload = () => {
+    return currentUser?.can_upload === true || currentUser?.is_admin === true;
+  };
+
   return (
     <>
       <nav className={`navbar ${darkMode ? 'dark-mode' : ''} ${scrolled ? 'scrolled' : ''}`}>
@@ -120,39 +157,41 @@ const Navbar = () => {
           whileHover={{ scale: 1.02 }}
           whileTap={{ scale: 0.98 }}
         >
-          <div className="logo-title">
-            <motion.div
-              className="logo-icon"
-              animate={hoveringLogo ? {
-                rotate: [0, 10, -10, 0],
-                scale: [1, 1.1, 1],
-              } : {}}
-              transition={{ duration: 0.5 }}
-            >
-              <FaStore className="store-icon" />
-            </motion.div>
-            <motion.span 
-              className="logo-text"
-              animate={hoveringLogo ? {
-                letterSpacing: ['normal', '2px', 'normal']
-              } : {}}
-              transition={{ duration: 0.3 }}
-            >
-              ImoFlames
-            </motion.span>
-            <motion.span 
-              className="logo-badge"
-              initial={{ opacity: 0, scale: 0 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ delay: 0.5 }}
-            >
-              <FaTag />
-            </motion.span>
+          <div className="logo-wrapper">
+            <div className="logo-icon">
+              <FaMicrochip className="chip-icon" />
+            </div>
+            <div className="logo-text-wrapper">
+              <motion.span 
+                className="logo-text"
+                animate={hoveringLogo ? {
+                  letterSpacing: ['normal', '1px', 'normal']
+                } : {}}
+                transition={{ duration: 0.3 }}
+              >
+                ImoFlames
+              </motion.span>
+              <motion.span 
+                className="logo-slogan"
+                animate={hoveringLogo ? {
+                  opacity: [0.8, 1, 0.8]
+                } : {}}
+                transition={{ duration: 0.3 }}
+              >
+                Fine Technology, Awesome Products
+              </motion.span>
+            </div>
           </div>
         </motion.div>
 
         <ul className="desktop-menu">
-          <DesktopNavLinks currentUser={currentUser} handleLogout={handleLogout} darkMode={darkMode} cartCount={cartCount} notificationCount={notificationCount} />
+          <DesktopNavLinks 
+            currentUser={currentUser} 
+            handleLogout={handleLogout} 
+            darkMode={darkMode} 
+            cartCount={cartCount}
+            canUpload={canUpload()}
+          />
           <ThemeToggle darkMode={darkMode} toggle={toggleDarkMode} />
         </ul>
 
@@ -185,7 +224,14 @@ const Navbar = () => {
               exit={{ x: '100%' }}
               transition={{ type: 'tween', duration: 0.3 }}
             >
-              <MobileNavLinks currentUser={currentUser} handleLogout={handleLogout} closeMenu={toggleMenu} darkMode={darkMode} cartCount={cartCount} />
+              <MobileNavLinks 
+                currentUser={currentUser} 
+                handleLogout={handleLogout} 
+                closeMenu={toggleMenu} 
+                darkMode={darkMode} 
+                cartCount={cartCount}
+                canUpload={canUpload()}
+              />
               <div className="mobile-theme-wrapper">
                 <ThemeToggle darkMode={darkMode} toggle={toggleDarkMode} mobile />
               </div>
@@ -197,18 +243,18 @@ const Navbar = () => {
   );
 };
 
-const DesktopNavLinks = ({ currentUser, handleLogout, darkMode, cartCount, notificationCount }) => (
+const DesktopNavLinks = ({ currentUser, handleLogout, darkMode, cartCount, canUpload }) => (
   <>
     <NavLinkItem path="/" icon={<FaHome />} label="Home" darkMode={darkMode} />
     <NavLinkItem path="/shop" icon={<FaStore />} label="Shop" darkMode={darkMode} />
     <NavLinkItem path="/contact-us" icon={<FaEnvelope />} label="Contact" darkMode={darkMode} />
     {currentUser ? (
       <>
-        {currentUser.can_upload && (
-          <NavLinkItem path="/upload" icon={<FaUpload />} label="Sell" darkMode={darkMode} />
+        {canUpload && (
+          <NavLinkItem path="/upload" icon={<FaUpload />} label="Sell" darkMode={darkMode} highlight />
         )}
         <NavLinkItem path="/cart" icon={<FaShoppingCart />} label="Cart" darkMode={darkMode} count={cartCount} />
-        <NavLinkItem path="/orders" icon={<FaBell />} label="Orders" darkMode={darkMode} count={notificationCount} />
+        <NavLinkItem path="/orders" icon={<FaClipboardList />} label="Orders" darkMode={darkMode} />
         <ProfileDropdown currentUser={currentUser} handleLogout={handleLogout} darkMode={darkMode} />
       </>
     ) : (
@@ -220,18 +266,18 @@ const DesktopNavLinks = ({ currentUser, handleLogout, darkMode, cartCount, notif
   </>
 );
 
-const MobileNavLinks = ({ currentUser, handleLogout, closeMenu, darkMode, cartCount }) => (
+const MobileNavLinks = ({ currentUser, handleLogout, closeMenu, darkMode, cartCount, canUpload }) => (
   <>
     <NavLinkItemMobile path="/" icon={<FaHome />} label="Home" closeMenu={closeMenu} darkMode={darkMode} />
     <NavLinkItemMobile path="/shop" icon={<FaStore />} label="Shop" closeMenu={closeMenu} darkMode={darkMode} />
     <NavLinkItemMobile path="/contact-us" icon={<FaEnvelope />} label="Contact" closeMenu={closeMenu} darkMode={darkMode} />
     {currentUser ? (
       <>
-        {currentUser.can_upload && (
-          <NavLinkItemMobile path="/upload" icon={<FaUpload />} label="Sell" closeMenu={closeMenu} darkMode={darkMode} />
+        {canUpload && (
+          <NavLinkItemMobile path="/upload" icon={<FaUpload />} label="Sell" closeMenu={closeMenu} darkMode={darkMode} highlight />
         )}
         <NavLinkItemMobile path="/cart" icon={<FaShoppingCart />} label="Cart" closeMenu={closeMenu} darkMode={darkMode} count={cartCount} />
-        <NavLinkItemMobile path="/notifications" icon={<FaBell />} label="Alerts" closeMenu={closeMenu} darkMode={darkMode} />
+        <NavLinkItemMobile path="/orders" icon={<FaClipboardList />} label="Orders" closeMenu={closeMenu} darkMode={darkMode} />
         <motion.li
           whileHover={{ scale: 1.02 }}
           whileTap={{ scale: 0.98 }}
@@ -319,13 +365,32 @@ const NavLinkItemMobile = ({ path, icon, label, closeMenu, darkMode, count, high
 
 const ProfileDropdown = ({ currentUser, handleLogout, darkMode }) => {
   const [open, setOpen] = useState(false);
+  const timeoutRef = useRef(null);
+
+  const handleMouseEnter = () => {
+    if (timeoutRef.current) clearTimeout(timeoutRef.current);
+    setOpen(true);
+  };
+
+  const handleMouseLeave = () => {
+    timeoutRef.current = setTimeout(() => {
+      setOpen(false);
+    }, 300);
+  };
+
+  useEffect(() => {
+    return () => {
+      if (timeoutRef.current) clearTimeout(timeoutRef.current);
+    };
+  }, []);
 
   return (
     <motion.div
       className={`dropdown ${open ? 'open' : ''} ${darkMode ? 'dark-mode' : ''}`}
+      onMouseEnter={handleMouseEnter}
+      onMouseLeave={handleMouseLeave}
     >
       <motion.button
-        onClick={() => setOpen(!open)}
         className={`dropdown-btn ${darkMode ? 'dark-mode' : ''}`}
         aria-expanded={open}
         whileHover={{ scale: 1.02 }}
@@ -352,7 +417,7 @@ const ProfileDropdown = ({ currentUser, handleLogout, darkMode }) => {
           >
             <ul className="dropdown-list">
               <motion.li
-                whileHover={{ x: 3 }}
+                whileHover={{ x: 5 }}
                 transition={{ duration: 0.1 }}
               >
                 <Link to="/profile" className={`dropdown-item ${darkMode ? 'dark-mode' : ''}`}>
@@ -360,15 +425,33 @@ const ProfileDropdown = ({ currentUser, handleLogout, darkMode }) => {
                 </Link>
               </motion.li>
               <motion.li
-                whileHover={{ x: 3 }}
+                whileHover={{ x: 5 }}
                 transition={{ duration: 0.1 }}
               >
-                <Link to="/orders" className={`dropdown-item ${darkMode ? 'dark-mode' : ''}`}>
-                  <span className="dropdown-icon">📦</span> My Orders
-                </Link>
+              
               </motion.li>
+              {currentUser.is_admin && (
+                <motion.li
+                  whileHover={{ x: 5 }}
+                  transition={{ duration: 0.1 }}
+                >
+                  <Link to="/user-management" className={`dropdown-item ${darkMode ? 'dark-mode' : ''}`}>
+                    <span className="dropdown-icon">⚙️</span> Admin Panel
+                  </Link>
+                </motion.li>
+              )}
+              {currentUser.can_upload && !currentUser.is_admin && (
+                <motion.li
+                  whileHover={{ x: 5 }}
+                  transition={{ duration: 0.1 }}
+                >
+                  <Link to="/my-products" className={`dropdown-item ${darkMode ? 'dark-mode' : ''}`}>
+                    <span className="dropdown-icon">📦</span> My Products
+                  </Link>
+                </motion.li>
+              )}
               <motion.li
-                whileHover={{ x: 3 }}
+                whileHover={{ x: 5 }}
                 transition={{ duration: 0.1 }}
               >
                 <button onClick={handleLogout} className={`dropdown-item-btn ${darkMode ? 'dark-mode' : ''}`}>
